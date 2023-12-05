@@ -53,7 +53,9 @@ class OWIfiles:
     OWI_DOWNLOAD_CWIDATACSV_DIR = f"{OWI_DOWNLOAD_DIR}/{os.path.splitext(CWI_DATA_CSV)[0]}"
     OWI_DOWNLOAD_WELLSSHP_DIR = f"{OWI_DOWNLOAD_DIR}/wellsshp"
     OWI_DOWNLOAD_LOGFILE = f"{OWI_DIR}/OWI_download.log"
-    
+    OWI_CODETABLES_JSON = os.path.join(OWI_DOWNLOAD_CWIDATACSV_DIR, 
+                                       'CWIcodetabledefs.json')
+    OWI_CODETABLES_DB = f"{OWI_DIR}/CWIcodetables.sqlite"
 
 #####################################################################
 # OWI Version is defined partly by class CWI_base() and partly by

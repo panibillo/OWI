@@ -604,6 +604,64 @@ class DB_SQLite(DB_context_manager):
         data = self.cur.execute(f'PRAGMA TABLE_INFO({table_name})').fetchall()
         return OrderedDict({str(f[1]) : str(f[2]) for f in data})
 
+    def import_csv_to_table(self, table_name, csv_name, column_defs=None):
+        """
+        Import a csv file to a table in the currently open database.
+        
+        Arguments
+        ---------
+        table_name: str
+        csv_name: str
+        column_defs: dict {column_name:column_def}
+        
+        -   If the table does not exist, it is created using column_defs.
+        
+        -   Names of the columns in the csv file must match the column names in 
+            the existing table, or column_defs, exactly
+        
+        -   If column_defs is None, then the table should already exist, and the 
+            list of columns is read from the existing table.
+        """
+        raise NotImplementedError
+        if not os.path.exists(csv_name):
+            raise ValueError(
+                f"The csv file is not found: {csv_name}")
+            return False
+        table_exists = table_name in self.get_tablenames()
+        if not (table_exists or column_defs):
+            raise ValueError(
+                f"Table {table_name} is missing and cannot be created without column_defs")
+            return False
+        if not table_exists:
+            colstr = ',\n    '.join([f"{k} {v}" for k,v in column_defs.items()])
+            q = f"CREATE TABLE {table_name} (\n    {colstr}\n);"
+            self.query(q) 
+            self.commit_db(q)
+            colnames = [c.lower() for c in column_defs.keys()]
+        else:
+            colnames = [c.lower() for c in self.get_column_names(table_name)]
+        
+        with open(csv_name, 'r') as fsrc:
+            reader = csv.reader(fsrc)         
+            header_row = True   
+            collist = []  
+            irow = 0
+            s = f"INSERT INTO {table_name} ("
+            for row in reader:   
+                irow += 1   
+                if header_row:    
+                    for col in row:
+                        col = col.strip() 
+                        assert col.lower() in colnames, f'Column {col} in csv is not defined in {table_name}'
+                        collist.append(col)  
+                    colstr = ', '.join(collist)  
+                    s = f"INSERT INTO {table_name} (\n  {colstr}\nVALUES ({self.qmarks(collist)});"
+                else:
+                    if len(row) == len(collist):
+                        self.query(s, tuple(row))
+            self.commit_db(f"{irow} rows read into {table_name} from {csv_name}.")
+            return True
+        
     def export_table_to_csv(self, table_name, csv_name, where=''):   
         """      
         Export [selected] records from table tablename to a csv file.
