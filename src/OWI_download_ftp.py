@@ -11,6 +11,9 @@ The purpose of module OWI_download_ftp is to download specified zip files from
 the Minnesota Geologic Survey ftp site, and unzip the files.  
 
 Method RUN_download_cwi demonstrates usage.
+
+Manual download instruction:
+
 '''
 
 import os, shutil
@@ -18,8 +21,45 @@ import time
 import datetime
 from ftplib import FTP
 import zipfile
+import pandas as pd
 
 import logging
+
+from OWI_config import versioninfo
+
+
+def xlsx_to_csv(xlsx_file, csv_file=None):
+    """
+    Converts an .xlsx file to .csv format on Ubuntu or any OS with Python.
+
+    Parameters:
+        xlsx_file (str): Path to the .xlsx file.
+        csv_file (str, optional): Path to save the .csv file. Defaults to the same name as the .xlsx file in the same directory.
+
+    Returns:
+        str: Path to the saved .csv file.
+    """
+    
+    # print (f"Found xlsx files rather than csv.\n > Converting: {xlsx_file}\n > To: {csv_file}")
+    # Check if the .xlsx file exists
+    if not os.path.exists(xlsx_file):
+        raise FileNotFoundError(f"The file '{xlsx_file}' does not exist.")
+
+    # Read the Excel file and save it as CSV
+    try:
+        # Read the first sheet of the Excel file
+        data = pd.read_excel(xlsx_file, sheet_name=0)
+        
+        # Save the data to a CSV file
+        data.to_csv(csv_file, index=False)
+        assert os.path.exists(csv_file)
+        #print(f" Converted '{xlsx_file}' to '{csv_file}'.")
+    except Exception as e:
+        raise RuntimeError(f"Failed to convert {xlsx_file} to CSV: {e}")
+    
+    return True
+
+
 
 log = logging.getLogger('CWI_refresh')
 logging.basicConfig(level=logging.INFO,
@@ -60,19 +100,24 @@ def download_cwi_from_ftp( ftpaddr,
         
         # Get the modify dates of the files on the ftp site. Formatted as integer, e.g. 20170521081548
         dict_ftp_file_modify_times = {f[0].lower():int(float(f[1].get('modify'))) for f in ftp.mlsd(path=ftppath)}
+        for key,val in dict_ftp_file_modify_times.items():
+            print (val, key)
     
         os.makedirs(downloadpath, exist_ok=True)
         os.makedirs(downloadshppath, exist_ok=True)
+        
         for fname in downloadfiles:
+            key = fname.lower()
             if 'locs' in fname: 
                 destfile = os.path.join(downloadshppath, fname)
             else:
                 destfile = os.path.join(downloadpath, fname)
-            if os.path.exists(destfile):
+            if os.path.exists(destfile) and key in dict_ftp_file_modify_times:
                 # Compare file times to see if a fresh download is needed
                 mtime = datetime.datetime.fromtimestamp( os.path.getmtime(destfile) )
                 desttime = int(mtime.strftime('%Y%m%d%H%M%S'))
-                if dict_ftp_file_modify_times[fname.lower()] < desttime:
+                
+                if dict_ftp_file_modify_times[key] < desttime:
                     log.info(f'{fname} is up to date. Download skipped.')
                     continue
                 
@@ -85,8 +130,9 @@ def download_cwi_from_ftp( ftpaddr,
                 except Exception as e:
                     lines = ftp.retrlines('LIST')
                     print (lines)
-                    print (f"ERROR downloading {ftppath+'/'+fname} to {destfile}")
-                    raise e
+                    print (f"ERROR downloading {ftppath+'/'+fname} to {destfile} : {e}")
+                    continue
+                    #raise e
                     
             duration = (time.time()-start)/60.0
             print( f"  ... DONE. completed in {duration:1.3f} minutes")
@@ -114,14 +160,49 @@ def download_cwi_from_ftp( ftpaddr,
     #                 print (e)
     
     duration = (time.time()-ftpstart)/60.0    
-    print(f"*** ftp download & unzip finished in {duration:1.3f} minutes ***" )        
+    print(f"*** ftp download & unzip finished in {duration:1.3f} minutes ***" )  
+    
+    if 0:
+        # As of Sept 2025, observed no .xlsx files in downloaded files. 
+        # This block of code is commented out to prevent accidental errors.
+        # If .xlsx files exist, they may be local products rather than new data.
+        # Run this block only after re-analysis!
+        for dirpath, dirnames, filenames in os.walk(downloadpath):
+            for file in filenames:
+                if file.endswith(".xlsx"):
+                    xlsxname = os.path.join(dirpath, file)
+                    csvname = xlsxname.replace(".xlsx",".csv")
+                    if os.path.exists(csvname):
+                        print(f"Found csv:  {csvname}")  
+                        with open(csvname, 'r') as file:
+                            for i, line in enumerate(file):
+                                print(line.strip())
+                                if i > 6:  # Stop after 7 lines
+                                    break
+                        print ()
+    
+                    else:
+                        print(f"Found xlsx: {xlsxname}  Converting ...", end=" ")
+                        ok = xlsx_to_csv(xlsxname, csvname)
+                        assert ok, csvname
+                        print (csvname)
+                           
     return rv
 
 
-def RUN_download_cwi():
+def RUN_download_cwi(C):
     import OWI_logins as L
-    from OWI_config import OWI_version as C
     
+    print ("RUN_download_cwi()")
+    print (versioninfo(C))
+    
+    # print (f"OWI_DOWNLOAD_DIR = {C.OWI_DOWNLOAD_DIR}")
+    # print (f"OWI_DOWNLOAD_WELLSSHP_DIR = {C.OWI_DOWNLOAD_WELLSSHP_DIR}")
+    # print (f"OWI_DOWNLOAD_FILES = {C.OWI_DOWNLOAD_FILES}")
+    return
+    
+           
+    # ftpaddr, ftppath, ftpuser, ftppass = L.get_ftp_logins('CWI_ftp', None)
     newfiles = download_cwi_from_ftp(
         ftpaddr = L.OWI_FTP_ADDRESS,
         ftppath = L.OWI_FTP_PATH,
@@ -135,6 +216,7 @@ def RUN_download_cwi():
 
 
 if __name__ == '__main__':
-    RUN_download_cwi()  
+    from OWI_config import OWI_version_40 as C
+    RUN_download_cwi(C)  
     
     print ('\n///////////// DONE ///////////////')

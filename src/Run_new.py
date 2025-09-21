@@ -18,11 +18,16 @@ Version
 -------
     2021-10-14
 """
-
+import os
 from OWI_download_ftp import RUN_download_cwi
 from OWI_import_csv import RUN_import_csv, RUN_import_swuds
 
-RUN_download_cwi()
+from OWI_config import  OWI_version as C
+if os.path.exists(C.OWI_DOWNLOAD_DB_NAME):
+    raise NotImplementedError (f"WARNING: the file should not exist before running:\n{C.OWI_DOWNLOAD_DB_NAME}")
+    
+
+if 0: RUN_download_cwi()
 RUN_import_csv()
 
 if 0: RUN_import_swuds()

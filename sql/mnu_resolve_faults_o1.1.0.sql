@@ -36,7 +36,7 @@ select     mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremar
 -- W-series cross refs are assumed errors and not inserted.
 --
 -- 11.a
--- First the default identifiers as the smaller wellid
+-- First the default identifiers as the numerically smaller wellid
 -- IGNORE is required because analysis missed several triples.
 INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mremark)

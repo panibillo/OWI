@@ -33,7 +33,7 @@ class OWIfiles:
     -   OWI_DOWNLOAD_LOGFILE  (log of download activity)
     -   cwi_info_csv.zip is conceived, but not yet produced by MGS.
     """
-    CWI_DATA_CSV = "cwi_CSV.zip"   # formerly cwidata_csv.zip
+    CWI_DATA_CSV = "cwidata_CSV.zip"   #9/15/2025 formerly cwidata_csv.zip, then cwi_CSV.zip
     CWI_LOCS = "cwilocs.zip"
     CWI_UNLOCS = "xcwiunlocs.zip"
     CWI_INFO = "cwi_info_csv.zip"
@@ -48,8 +48,10 @@ class OWIfiles:
         
     elif platform.system() == 'Linux':
         OWI_DOWNLOAD_DIR = f"{os.path.expanduser('~')}/R/cwi"
-        OWI_DIR = f"{os.path.expanduser('~')}/data/MN/OWI"
+        OWI_DIR = f"{os.path.expanduser('~')}/Documents/data/MN/OWI"
 
+    # OWI_DOWNLOAD_CWIDATACSV_EXT = ".csv"
+    OWI_DOWNLOAD_CWIDATACSV_EXT = ".txt"
     OWI_DOWNLOAD_CWIDATACSV_DIR = f"{OWI_DOWNLOAD_DIR}/{os.path.splitext(CWI_DATA_CSV)[0]}"
     OWI_DOWNLOAD_WELLSSHP_DIR = f"{OWI_DOWNLOAD_DIR}/wellsshp"
     OWI_DOWNLOAD_LOGFILE = f"{OWI_DIR}/OWI_download.log"
@@ -72,6 +74,24 @@ class CWI_base(OWIfiles):
     OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS = False
     OWI_SCHEMA_HAS_DATA_CONSTRAINTS = False
     OWI_RUN_SQL_FILES = []
+
+    def __str__(self):
+        rv = '\n  '.join(
+            f"OWI_DB_VERSION = {self.OWI_DB_VERSION}",
+            f"OWI_DB_SCHEMA = {self.OWI_DB_SCHEMA},"
+            f"OWI_DOWNLOAD_DB_NAME = {self.OWI_DOWNLOAD_DB_NAME}"
+            f"OWI_SCHEMA_HAS_WELLID = {self.OWI_SCHEMA_HAS_WELLID},"
+            f"OWI_REFORMAT_UNIQUE_NO = {self.OWI_REFORMAT_UNIQUE_NO},"
+            f"OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS = {self.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS},"
+            f"OWI_SCHEMA_HAS_DATA_CONSTRAINTS= {self.OWI_SCHEMA_HAS_DATA_CONSTRAINTS},"
+            f"OWI_DOWNLOAD_DIR = {self.OWI_DOWNLOAD_DIR},"
+            f" = {self.OWI_DOWNLOAD_CWIDATACSV_DIR},"
+            f" = {self.OWI_DOWNLOAD_WELLSSHP_DIR =},"
+            f" = {self.OWI_DOWNLOAD_LOGFILE},"
+            f" = {self.OWI_CODETABLES_JSON },"
+            f" = {self.OWI_CODETABLES_DB},"
+            #f" = {self.},"
+            )
 #####################################################################
     
 class OWI_version_0(CWI_base):
@@ -81,7 +101,6 @@ class OWI_version_0(CWI_base):
     OWI_DB_VERSION = "c4.0.0"
     OWI_DB_SCHEMA  = "../sql/cwischema_c4.0.0.sql"
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
-
 
 class OWI_version_1(CWI_base):
     """ Add c4locs file """
@@ -153,7 +172,7 @@ class OWI_version_40(OWI_base):
                       OWI_MNU_REINIT_O1ID,           # 3
                       OWI_MNU_VIEWS,                 # 4
                       OWI_MNU_ANALYZE_O1ID,          # 5
-                      OWI_MNU_RESOLVE_O1ID,          # 6
+                      # OWI_MNU_RESOLVE_O1ID,          # 6
                      ]
     #
     # OWI_MNU_INSERT = ["../sql/insert_c4locs_to_c4ix.sql",
@@ -165,6 +184,9 @@ class OWI_version_40(OWI_base):
     # OWI_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
     # OWI_MNU_INSERT = "../sql/mnu_insert_c4.4.0.sql"
 
+    def __str__(self):
+        return 'Hello'
+        return super(self)
 
 
 class SWUDS_version_0:
@@ -199,6 +221,31 @@ class SWUDS_version(SWUDS_version_0):
     """ Uncomment only one of the SWUDS_version class definitions """
     pass
 
+def ffe(fname):
+    if os.path.exists(fname):
+        return f"+ : {fname}"
+    else:
+        return f"- : {fname}"
+
+def versioninfo(C):
+     return '\n  '.join((
+        f"\n=========== OWI_DB_VERSION = {C.OWI_DB_VERSION} ==========",
+        f"OWI_DIR                     = {ffe(C.OWI_DIR)}",
+        f"OWI_DOWNLOAD_DIR            = {ffe(C.OWI_DOWNLOAD_DIR)}",
+        f"OWI_DOWNLOAD_DB_NAME        = {ffe(C.OWI_DOWNLOAD_DB_NAME)}",
+        f"OWI_DOWNLOAD_CWIDATACSV_DIR = {ffe(C.OWI_DOWNLOAD_CWIDATACSV_DIR)}",
+        f"OWI_DOWNLOAD_CWIDATACSV_EXT =     {C.OWI_DOWNLOAD_CWIDATACSV_EXT}",
+        f"OWI_DOWNLOAD_WELLSSHP_DIR   = {ffe(C.OWI_DOWNLOAD_WELLSSHP_DIR)}",
+        f"OWI_DOWNLOAD_LOGFILE        = {ffe(C.OWI_DOWNLOAD_LOGFILE)}",
+        f"OWI_CODETABLES_JSON         = {ffe(C.OWI_CODETABLES_JSON )}",
+        f"OWI_CODETABLES_DB           = {ffe(C.OWI_CODETABLES_DB)}",
+        f"OWI_DB_SCHEMA               = {C.OWI_DB_SCHEMA}",
+        f"OWI_SCHEMA_HAS_WELLID       = {C.OWI_SCHEMA_HAS_WELLID}",
+        f"OWI_REFORMAT_UNIQUE_NO      = {C.OWI_REFORMAT_UNIQUE_NO}",
+        f"OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS = {C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS}",
+        f"OWI_SCHEMA_HAS_DATA_CONSTRAINTS     = {C.OWI_SCHEMA_HAS_DATA_CONSTRAINTS}",
+        ))
+
 if __name__ == '__main__':
     import os
     R = SWUDS_version_0
@@ -207,24 +254,25 @@ if __name__ == '__main__':
                OWI_version_2(),
                OWI_version_3(),
                OWI_version_40() ):
-        print (f"OWI_DB_VERSION = {C.OWI_DB_VERSION}")
-        print (f"OWI_DB_SCHEMA = {C.OWI_DB_SCHEMA}")
-        print (f"OWI_DOWNLOAD_DIR = {os.path.abspath(C.OWI_DOWNLOAD_DIR)}")
-        print (f"OWI_DOWNLOAD_DB_NAME = {os.path.abspath(C.OWI_DOWNLOAD_DB_NAME)}",
-               f". (Exists = {os.path.exists(C.OWI_DOWNLOAD_DB_NAME)})")
-        print (f"OWI_DOWNLOAD_LOGFILE = {os.path.abspath(C.OWI_DOWNLOAD_LOGFILE)}",
-               f". (Exists = {os.path.exists(C.OWI_DOWNLOAD_LOGFILE)})")
-    
-        print (f"OWI_DIR = {os.path.abspath(C.OWI_DIR)}")
-        print ("OWI_DOWNLOAD_FILES:")
-        assert os.path.exists(C.OWI_DOWNLOAD_CWIDATACSV_DIR), f"Missing OWI_DOWNLOAD_CWIDATACSV_DIR {C.OWI_DOWNLOAD_CWIDATACSV_DIR}"
-        for f in C.OWI_DOWNLOAD_FILES:
-            print (f"   {f:<15} = Exists={os.path.exists(os.path.join(C.OWI_DOWNLOAD_CWIDATACSV_DIR, f))}" )
-        assert os.path.exists(C.OWI_DB_SCHEMA), f"Missing OWI_DB_SCHEMA {C.OWI_DB_SCHEMA}"
-        assert os.path.exists(C.OWI_DOWNLOAD_DIR), f"Missing OWI_DOWNLOAD_DIR {C.OWI_DOWNLOAD_DIR}"
-        assert os.path.exists(C.OWI_DIR), f"Missing OWI_DIR {C.OWI_DIR}"
-        
-        assert os.path.exists(C.OWI_DOWNLOAD_WELLSSHP_DIR), f"Missing OWI_DOWNLOAD_WELLSSHP_DIR {C.OWI_DOWNLOAD_WELLSSHP_DIR}"
+        print (versioninfo(C))
+        # print (f"\n==========  OWI_DB_VERSION = {C.OWI_DB_VERSION} ==========")
+        # print (f"OWI_DB_SCHEMA = {C.OWI_DB_SCHEMA}")
+        # print (f"OWI_DOWNLOAD_DIR = {os.path.abspath(C.OWI_DOWNLOAD_DIR)}")
+        # print (f"OWI_DOWNLOAD_DB_NAME = {os.path.abspath(C.OWI_DOWNLOAD_DB_NAME)}",
+        #        f". (Exists = {os.path.exists(C.OWI_DOWNLOAD_DB_NAME)})")
+        # print (f"OWI_DOWNLOAD_LOGFILE = {os.path.abspath(C.OWI_DOWNLOAD_LOGFILE)}",
+        #        f". (Exists = {os.path.exists(C.OWI_DOWNLOAD_LOGFILE)})")
+        #
+        # print (f"OWI_DIR = {os.path.abspath(C.OWI_DIR)}")
+        # print ("OWI_DOWNLOAD_FILES:")
+        # assert os.path.exists(C.OWI_DOWNLOAD_CWIDATACSV_DIR), f"Missing OWI_DOWNLOAD_CWIDATACSV_DIR {C.OWI_DOWNLOAD_CWIDATACSV_DIR}"
+        # for f in C.OWI_DOWNLOAD_FILES:
+        #     print (f"   {f:<15} = Exists={os.path.exists(os.path.join(C.OWI_DOWNLOAD_CWIDATACSV_DIR, f))}" )
+        # assert os.path.exists(C.OWI_DB_SCHEMA), f"Missing OWI_DB_SCHEMA {C.OWI_DB_SCHEMA}"
+        # assert os.path.exists(C.OWI_DOWNLOAD_DIR), f"Missing OWI_DOWNLOAD_DIR {C.OWI_DOWNLOAD_DIR}"
+        # assert os.path.exists(C.OWI_DIR), f"Missing OWI_DIR {C.OWI_DIR}"
+        #
+        # assert os.path.exists(C.OWI_DOWNLOAD_WELLSSHP_DIR), f"Missing OWI_DOWNLOAD_WELLSSHP_DIR {C.OWI_DOWNLOAD_WELLSSHP_DIR}"
                                                                                              
     for S in ( SWUDS_version_0(),
                #SWUDS_version_1() 

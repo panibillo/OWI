@@ -1,6 +1,15 @@
 '''
 Created on Oct 10, 2020
 
+NOTES
+2025-09-21
+    Realized that latest ftp download was not refreshing .csv files.
+    But rather was refreshing .txt files.  Confirmed that .txt are formatted 
+    identically as csv, though not sorted the same.
+    
+    Therefor introduced global config variable 
+        OWI_config: OWI_DOWNLOAD_CWIDATACSV_EXT = '.txt' or'.csv'
+
 @author: Bill
 '''
 import csv
@@ -11,9 +20,11 @@ import shapefile
 from OWI_sqlfile import execute_statements_from_file
 from OWI_sqlite import c4db
 
-from OWI_config import  OWI_version as C
-from OWI_config import  SWUDS_version_0 as S
+from OWI_config import OWI_version as C
+from OWI_config import SWUDS_version_0 as S
+from OWI_config import versioninfo
 
+CSVEXT = C.OWI_DOWNLOAD_CWIDATACSV_EXT
 """ 
 Simple type checking, type converting, and text cleaning functions.
 These are used for importing .csv files, and assume that the data in the .csv
@@ -103,7 +114,7 @@ def get_col_names_and_converters(db, table_name, csv_cols):
             continue
         n = csv_cols[ucsv_cols.index(N)] 
         col_names.append(n)   
-        if   T[:3] == 'INTE':
+        if   T[:4] == 'INTE':
             dcol_func[n] = safeint
         elif T == 'REAL':
             dcol_func[n] = safefloat
@@ -214,7 +225,7 @@ class cwi_csvupdate():
         dolocs = tables is None or 'locs' in tables
         if dodata:
             for t in self.data_table_names:
-                csvname = os.path.join(self.cwidatacsvdir, f'{t}.csv')
+                csvname = os.path.join(self.cwidatacsvdir, f'{t}{CSVEXT}')
                 if not os.path.exists(csvname):
                     print(f'Missing {csvname}, Table {t} not refreshed')
                     continue
@@ -254,7 +265,6 @@ class cwi_csvupdate():
                  column, so the row generator must supply the wellid at the 
                  time that a record is created.
         """
-        
         if table_names is None: 
             table_names = self.data_table_names 
         
@@ -269,7 +279,12 @@ class cwi_csvupdate():
                 print (f"skipping {table_name}, {n} records already in db.")
                 continue
                         
-            csvname = os.path.join(self.cwidatacsvdir, f'{table_name}.csv')
+            csvname = os.path.join(self.cwidatacsvdir, f'{table_name}{CSVEXT}')
+            xlsname = csvname.replace(CSVEXT,'.xlsx')
+            if os.path.exists(xlsname) and not os.path.exists(csvname):
+                raise NotImplementedError
+                # ok = xlsx_to_csv(xlsname, csvname)
+            
             assert os.path.exists(csvname), csvname
 
             ok = self.force_to_ascii(csvname)
@@ -300,7 +315,7 @@ class cwi_csvupdate():
         If locs is supplied as a csv file rather than shapefile(s), then read it
         in like the other data tables.
         """
-        csvname = os.path.join(self.cwidatacsvdir, 'c4locs.csv') 
+        csvname = os.path.join(self.cwidatacsvdir, f'c4locs{CSVEXT}') 
         if os.path.exists(csvname):
             self.import_data_from_csv( db, schema_has_constraints, 
                                        table_names=('c4locs',) )
@@ -381,10 +396,27 @@ class cwi_csvupdate():
             print (e)
             return False
 
-def RUN_import_csv(data=True, 
+def refresh_table(table_name):
+    from OWI_sqlite import c4db 
+    C4 = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
+                        C.OWI_DOWNLOAD_WELLSSHP_DIR)
+    with c4db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
+        if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
+            db.query('PRAGMA foreign_keys = False')
+ 
+        db.query(f"Delete from {table_name};")
+        C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS,
+                                 table_names= [table_name])
+        db.commit_db(msg='Imported data from csv files.')
+        
+        C4.import_data_from_csv(table_names = [table_name])
+    
+def RUN_import_csv(C,              # OWI_version
+                   data=True, 
                    locs=True,
                    wellids=True,
-                   resume_MNU_at = 0):
+                   resume_MNU_at = 0,
+                   tables=None):
     """ 
     Demonstrate full import from csv files (and shape files). 
     Creates a new OWI.sqlite.  Does not update an existing OWI.sqlite
@@ -463,7 +495,7 @@ def RUN_import_csv(data=True,
         if wellids:
             if C.OWI_SCHEMA_HAS_WELLID:
                 C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
-                db.commit_db(msg='Populated wellid in c4 data tables.')
+                db.commit_db(msg='Popula/home/bill/R/cwi/OWI40.sqliteted wellid in c4 data tables.')
             
             
             if C.OWI_REFORMAT_UNIQUE_NO:
@@ -546,6 +578,11 @@ def RUN_import_swuds(create=False):
 
 
 if __name__ == '__main__':
+    print (versioninfo(C))
+    RUN_import_csv(C, tables = None)  # re-imports all tables from csv. 
+    
+    # RUN_import_csv(tables = 'data')
+    # refresh_table('c4ix')
     # RUN_import_csv(data=False, 
     #                locs=False,
     #                wellids = False,

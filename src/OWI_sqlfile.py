@@ -29,7 +29,7 @@ def read_sql_file(sql_file):
     return statements
      
        
-def execute_statements_from_file(db, sql_file):
+def execute_statements_from_file(db, sql_file, verbose=False):
     """
     Read and execute a series of statements from an sql statement file
     
@@ -38,6 +38,11 @@ def execute_statements_from_file(db, sql_file):
     print (f"execute_statements_from_file: {sql_file}")
     print (f"   into {db.db_name}")
     statements = read_sql_file(sql_file)
-    for s in statements:
+    n = len(statements)
+    for i,s in enumerate(statements):
+        if verbose:
+            print (f"> Satement {i} of {n} ...\n{s}")
         db.query(s)
-
+        if verbose:
+            print ("---------- done -----------")
+    print (f"Finished all statments in {sql_file}")
