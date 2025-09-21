@@ -19,6 +19,9 @@ then
     myvar = S.[varname]   
 
 @author: William Olsen
+
+Notes:
+2025-09-21   Table names changed from c4-- to c5--
 '''
 import os, platform
 
@@ -64,9 +67,9 @@ class OWIfiles:
 # one of the CWI_version_#() classes.
 #####################################################################
 class CWI_base(OWIfiles):
-    """ Common configurations for versions using only c4-- tables."""
+    """ Common configurations for versions using only c5-- tables."""
     OWI_SCHEMA_IDENTIFIER_MODEL = 'CWI'
-    OWI_DATA_TABLE_PREFIX = 'c4'
+    OWI_DATA_TABLE_PREFIX = 'c5'
     OWI_MNU_INSERT = None
     OWI_SCHEMA_HAS_LOCS = False
     OWI_SCHEMA_HAS_WELLID = False
@@ -93,45 +96,96 @@ class CWI_base(OWIfiles):
             #f" = {self.},"
             )
 #####################################################################
-    
-class OWI_version_0(CWI_base):
+### c4    
+class OWI_version4_0(CWI_base):
     """ Clone of cwi data files with no modifications """
+    cn = self.OWI_DATA_TABLE_PREFIX
     OWI_SCHEMA_VERSION = 0
     OWI_SCHEMA_MINOR_VERSION = 0
-    OWI_DB_VERSION = "c4.0.0"
+    OWI_DB_VERSION = f"{cn}.0.0"
     OWI_DB_SCHEMA  = "../sql/cwischema_c4.0.0.sql"
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
 
-class OWI_version_1(CWI_base):
+class OWI_version4_1(CWI_base):
     """ Add c4locs file """
+    cn = self.OWI_DATA_TABLE_PREFIX
     OWI_SCHEMA_VERSION = 1
     OWI_SCHEMA_MINOR_VERSION = 0
-    OWI_DB_VERSION = "c4.1.0"
-    OWI_DB_SCHEMA  = "../sql/cwischema_c4.1.0.sql"
+    OWI_DB_VERSION = f"{cn}.1.0"
+    OWI_DB_SCHEMA  = "../sql/cwischema_{cn}.1.0.sql"
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
     OWI_SCHEMA_HAS_LOCS = True
     OWI_RUN_SQL_FILES = ["../sql/insert_c4locs_to_c4ix.sql"]
     
-class OWI_version_2(CWI_base):
+class OWI_version4_2(CWI_base):
     """ Add columns rowid and wellid to all tables """
+    cn = self.OWI_DATA_TABLE_PREFIX
     OWI_SCHEMA_VERSION = 2
     OWI_SCHEMA_MINOR_VERSION = 0
-    OWI_DB_VERSION = "c4.2.0"
+    OWI_DB_VERSION = f"{cn}.2.0"
     OWI_DB_SCHEMA  = "../sql/cwischema_c4.2.0.sql"
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
     OWI_SCHEMA_HAS_LOCS = True
     OWI_RUN_SQL_FILES = ["../sql/insert_c4locs_to_c4ix.sql"]
     OWI_SCHEMA_HAS_WELLID = True
 
-class OWI_version_3(CWI_base):
+class OWI_version4_3(CWI_base):
     """ Add Foreign Key constraints on wellid to data tables """
+    cn = self.OWI_DATA_TABLE_PREFIX
     OWI_SCHEMA_VERSION = 3
-    OWI_DB_VERSION = "c4.3.0"
+    OWI_DB_VERSION = f"{cn}.3.0"
     OWI_SCHEMA_MINOR_VERSION = 0
-    OWI_DB_SCHEMA  = "../sql/cwischema_c4.3.0.sql"
+    OWI_DB_SCHEMA  = "../sql/cwischema_{cn}.3.0.sql"
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
     OWI_SCHEMA_HAS_LOCS = True
-    OWI_RUN_SQL_FILES = ["../sql/insert_c4locs_to_c4ix.sql"]
+    OWI_RUN_SQL_FILES = ["../sql/insert_{cn}locs_to_{cn}ix.sql"]
+    OWI_SCHEMA_HAS_WELLID = True
+    OWI_REFORMAT_UNIQUE_NO = True
+    OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS = True
+
+### c5
+class OWI_version_0(CWI_base):
+    """ Clone of cwi data files with no modifications """
+    cn = self.OWI_DATA_TABLE_PREFIX
+    OWI_SCHEMA_VERSION = 0
+    OWI_SCHEMA_MINOR_VERSION = 0
+    OWI_DB_VERSION = f"{cn}.0.0"
+    OWI_DB_SCHEMA  = f"../sql/cwischema_{cn}.0.0.sql"
+    OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
+
+class OWI_version_1(CWI_base):
+    """ Add {cn}locs file """
+    cn = self.OWI_DATA_TABLE_PREFIX
+    OWI_SCHEMA_VERSION = 1
+    OWI_SCHEMA_MINOR_VERSION = 0
+    OWI_DB_VERSION = f"{cn}.1.0"
+    OWI_DB_SCHEMA  = f"../sql/cwischema_{cn}.1.0.sql"
+    OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
+    OWI_SCHEMA_HAS_LOCS = True
+    OWI_RUN_SQL_FILES = ["../sql/insert_{cn}locs_to_{cn}ix.sql"]
+    
+class OWI_version_2(CWI_base):
+    """ Add columns rowid and wellid to all tables """
+    cn = self.OWI_DATA_TABLE_PREFIX
+    OWI_SCHEMA_VERSION = 2
+    OWI_SCHEMA_MINOR_VERSION = 0
+    OWI_DB_VERSION = f"{cn}.2.0"
+    OWI_DB_SCHEMA  = f"../sql/cwischema_{cn}.2.0.sql"
+    OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
+    OWI_SCHEMA_HAS_LOCS = True
+    OWI_RUN_SQL_FILES = ["../sql/insert_{cn}locs_to_{cn}ix.sql"]
+    OWI_SCHEMA_HAS_WELLID = True
+
+class OWI_version_3(CWI_base):
+    """ Add Foreign Key constraints on wellid to data tables """
+    cn = self.OWI_DATA_TABLE_PREFIX
+    OWI_SCHEMA_VERSION = 3
+    OWI_DB_VERSION = f"{cn}.3.0"
+    OWI_SCHEMA_MINOR_VERSION = 0
+    OWI_DB_SCHEMA  = f"../sql/cwischema_{cn}.3.0.sql"
+    OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/cwi{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
+    OWI_SCHEMA_HAS_LOCS = True
+    OWI_RUN_SQL_FILES = ["../sql/insert_{cn}locs_to_{cn}ix.sql"]
     OWI_SCHEMA_HAS_WELLID = True
     OWI_REFORMAT_UNIQUE_NO = True
     OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS = True
@@ -158,13 +212,13 @@ class OWI_version_40(OWI_base):
     OWI_DB_VERSION = "o1.1.0"
     OWI_DB_SCHEMA  = "../sql/owischema_o1.1.2.sql"
     
-    OWI_MNU_INIT_MNU_RELATIONSHIP = "../sql/mnu_MNU_relationship_o1.1.0.sql"
-    OWI_MNU_INSERT_LOCS = "../sql/insert_c4locs_to_c4ix.sql"
-    OWI_MNU_CLEAN_C4ID = "../sql/mnu_clean_c4id_o1.1.0.sql"
-    OWI_MNU_REINIT_O1ID = "../sql/mnu_reinit_o1id_o1.1.0.sql"
-    OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.0.sql"]
-    OWI_MNU_ANALYZE_O1ID = "../sql/mnu_analyze_faults_o1.1.0.sql"
-    OWI_MNU_RESOLVE_O1ID = "../sql/mnu_resolve_faults_o1.1.0.sql"
+    OWI_MNU_INIT_MNU_RELATIONSHIP = "../sql/mnu_MNU_relationship_o1.1.1.sql"
+    OWI_MNU_INSERT_LOCS = "../sql/insert_{cn}locs_to_{cn}ix.sql"
+    OWI_MNU_CLEAN_C4ID = f"../sql/mnu_clean_{cn}id_o1.1.0.sql"
+    OWI_MNU_REINIT_O1ID = "../sql/mnu_reinit_o1id_o1.1.1.sql"
+    OWI_MNU_VIEWS = ["../sql/mnu_views_o1.1.1.sql"]
+    OWI_MNU_ANALYZE_O1ID = "../sql/mnu_analyze_faults_o1.1.1.sql"
+    OWI_MNU_RESOLVE_O1ID = "../sql/mnu_resolve_faults_o1.1.1.sql"
     
     OWI_MNU_INSERT = [OWI_MNU_INIT_MNU_RELATIONSHIP, # 0
                       OWI_MNU_INSERT_LOCS,           # 1
@@ -181,8 +235,8 @@ class OWI_version_40(OWI_base):
     #                   "../sql/mnu3_resolve_faults_o1.1.0.sql"
     #                   ]
     OWI_DOWNLOAD_DB_NAME = f"{OWIfiles().OWI_DOWNLOAD_DIR}/OWI{OWI_SCHEMA_VERSION}{OWI_SCHEMA_MINOR_VERSION}.sqlite"
-    # OWI_DB_SCHEMA  = "../sql/cwischema_c4.4.0.sql"
-    # OWI_MNU_INSERT = "../sql/mnu_insert_c4.4.0.sql"
+    # OWI_DB_SCHEMA  = "../sql/cwischema_{cn}.4.0.sql"
+    # OWI_MNU_INSERT = "../sql/mnu_insert_{cn}.4.0.sql"
 
     def __str__(self):
         return 'Hello'

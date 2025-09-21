@@ -1,31 +1,36 @@
 /*
-Insert newer records from c4locs table into c4ix table.
-Identify the newer records by setting field c4ix.UNUSED = 'from c4locs'
+Version:    c5  
+Date:       2025-09-21
+Author:     William Olsen
+
+
+Insert newer records from c5locs table into c5ix table.
+Identify the newer records by setting field c5ix.UNUSED = 'from c5locs'
 
 Apparently new records may be added to the GIS layers before they are added to 
-the CWI tables.  Here they are added only to the c4ix table, and no analysis
-is yet written to populate the other c4/c5 data tables.
+the CWI tables.  Here they are added only to the c5ix table, and no analysis
+is yet written to populate the other c5/c5 data tables.
 
-The number of newer records in c4locs is sometimes 0, and typically not too 
+The number of newer records in c5locs is sometimes 0, and typically not too 
 large. 
 
 --   Running this insert multiple times should be harmless, but if it is desired
--- to delete affected records from c4ix before running, then the ids have to 
+-- to delete affected records from c5ix before running, then the ids have to 
 -- also be deleted from o1id first, becuase of the Foreign Key relationship.
 --   Run the following 2 queries in order. Both depend on identifying the  
--- records using c4ix.UNUSED = 'from c4locs'. 
+-- records using c5ix.UNUSED = 'from c5locs'. 
 DELETE FROM o1id 
   WHERE wellid IN(
     SELECT wellid 
-	FROM c4ix 
-	WHERE UNUSED = 'from c4locs')
+	FROM c5ix 
+	WHERE UNUSED = 'from c5locs')
 ;
 
-DELETE from c4ix
-  WHERE UNUSED = 'from c4locs'
+DELETE from c5ix
+  WHERE UNUSED = 'from c5locs'
 ;
 */
-Insert into c4ix (
+Insert into c5ix (
     wellid, RELATEID, COUNTY_C, UNIQUE_NO, WELLNAME,
     TOWNSHIP, RANGE, RANGE_DIR, SECTION, SUBSECTION, MGSQUAD_C,
     ELEVATION, ELEV_MC,
@@ -53,9 +58,9 @@ SELECT
     L.AQUIFER, L.CUTTINGS, L.CORE, L.BHGEOPHYS,
     L.GEOCHEM, L.WATERCHEM, L.OBWELL, L.SWL, L.DH_VIDEO,
     L.INPUT_SRC, L.UNUSED, L.ENTRY_DATE, L.UPDT_DATE,
-    'From c4locs only' as owi_remark
-FROM c4locs L
-LEFT JOIN c4ix X
+    'From c5locs only' as owi_remark
+FROM c5locs L
+LEFT JOIN c5ix X
   ON L.wellid = X.wellid
   WHERE X.wellid IS NULL
 ;

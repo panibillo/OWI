@@ -6,7 +6,7 @@ Author: 	William C. Olsen
 The cwischema files define SQLite versions of the cwi database.  Different versions are defined both to facilitate development steps, and to serve the needs of different users.
 
 The version numbering system remains tentative.  
-Originally, all versions are identified as c4.[S].[V]  where S distinguishes different features added to the schema, and V is the current version of schema S. 
+Originally, all versions are identified as c5.[S].[V]  where S distinguishes different features added to the schema, and V is the current version of schema S. 
 
 The version number and version schema are named in OWI_config.py as globals:
 	OWI_DB_VERSION   
@@ -14,20 +14,20 @@ The version number and version schema are named in OWI_config.py as globals:
 
 Outline of versions:
 
-c4.0.0	Versions that include only the main data tables exactly as served.
+c5.0.0	Versions that include only the main data tables exactly as served.
 	Columns exactly match the csv files served on fullset/cwidata_csv.zip on the MGS ftp site, as of 2021-10-02.  There is no table with well coordinates.
 
-c4.1.0  Table c4locs is added.
+c5.1.0  Table c5locs is added.
 
-c4.2.0	Columns rowid and wellid are added explicitly to each table (as columns 1 & 2).
-	In table c4ix, the position of the wellid column is moved to column 2.
+c5.2.0	Columns rowid and wellid are added explicitly to each table (as columns 1 & 2).
+	In table c5ix, the position of the wellid column is moved to column 2.
 
-c4.3.0  Foreign key constraints (wellid) are added to the data tables  
+c5.3.0  Foreign key constraints (wellid) are added to the data tables  
 	The raw data cloned from cwi may not pass all integrity checks.
-	In tables c4ix and c4locs, text values in the UNIQUE_NO column are reformatted to remove leading zeros. 
+	In tables c5ix and c5locs, text values in the UNIQUE_NO column are reformatted to remove leading zeros. 
 
-c4.4.0  Table c4id is modified to include all wellids and all Well Unique Numbers.
-	Two boolean fields 'MNU' and 'sMNU' are added to c4id. (integers = 0/1/Null).
+c5.4.0  Table c5id is modified to include all wellids and all Well Unique Numbers.
+	Two boolean fields 'MNU' and 'sMNU' are added to c5id. (integers = 0/1/Null).
 	See notes below on 'Modified Identifier Model'.
 
 Notes on the data tables
@@ -35,16 +35,16 @@ Notes on the data tables
 	The data tables are described on the MWI website.
 		http://mgsweb2.mngs.umn.edu/cwi_doc/cwiDataTables.htm
 
-	The standard c4 tables included in cwidata_csv.zip are:
-		c4ad
-		c4c1
-		c4c2
-		c4id
-		c4ix
-		c4pl
-		c4rm
-		c4st
-		c4wl
+	The standard c5 tables included in cwidata_csv.zip are:
+		c5ad
+		c5c1
+		c5c2
+		c5id
+		c5ix
+		c5pl
+		c5rm
+		c5st
+		c5wl
 
 Notes on SQLite datatypes
 	SQLite is unique among database engines in generally not enforcing data types as declared for columns. Each value is assigned a datatype based on the value itself, following a set of relatively loose 'affinity rules'.  
@@ -55,15 +55,15 @@ Notes on SQLite datatypes
 		2) Table definitions and data import methods may contain errors in type declarations that remain undetected because SQLite silently handles type conversions using its own type affinity rules.  Stored values may not have the data type declared in the column.
 		3) SQLite may internally convert types when making comparison tests in WHERE clauses.  That usually works, but introduces ambiguity unless the rules are very well understood.
 	
-Notes on table c4locs
+Notes on table c5locs
 
 	Well coordinates are published on the ftp site in 2 shape files, named wells.shp (located wells) and unloc_wells.shp (unlocated wells).  In the Sqlite database, well locations are held in a single new table named 
-		c4locs.  
-	Table c4locs is a clone of the attribute tables from the shape files and includes records from both shape files. It includes columns for the UTM coordinates.  
+		c5locs.  
+	Table c5locs is a clone of the attribute tables from the shape files and includes records from both shape files. It includes columns for the UTM coordinates.  
 	
 	Records from the 2 shape files are distinguished by the value 'loc' or 'unloc' that is entered in a newly defined column named 'CWI_loc'.
 	
-	The shape files may contain well records not present in c4ix or the other data tables.  These appear to be the most recent additions.
+	The shape files may contain well records not present in c5ix or the other data tables.  These appear to be the most recent additions.
 
 Notes on the code tables
 
@@ -82,29 +82,29 @@ Notes on rowid column
 
 Notes on wellid column
 
-	The wellid column is not defined in version c4, but is defined in later versions as the relational identifier.  It is an integer column with values set equivalent to the value in the RELATEID column in table c4ix.  
+	The wellid column is not defined in version c5, but is defined in later versions as the relational identifier.  It is an integer column with values set equivalent to the value in the RELATEID column in table c5ix.  
 	
-	The wellid column is added to every table in version c4.2.0, and indexed.  
+	The wellid column is added to every table in version c5.2.0, and indexed.  
 	
-	Data table relationships are defined in version c4.3.0 using the wellid as a Foreign Key referenced to table c4ix.  
+	Data table relationships are defined in version c5.3.0 using the wellid as a Foreign Key referenced to table c5ix.  
 	
-	In version c4.4.0 table c4id takes primacy for well identifiers, and new constraints are placed on both identifiers and wellid's.  Data as served from CWI may not pass all constraints of this model.
+	In version c5.4.0 table c5id takes primacy for well identifiers, and new constraints are placed on both identifiers and wellid's.  Data as served from CWI may not pass all constraints of this model.
 
 	
-Notes on the MNU Identifier Model, defined beginning with version c4.4.0.
+Notes on the MNU Identifier Model, defined beginning with version c5.4.0.
 
 	Development and explanation of the MNU identifier model is documented in MNUmodel.ltx, which compiles with LaTeX into a .pdf file.
 	
 	The nameing convention for the data tables in CWI is to begin with the letter 'c', followed by the database version number, currently '4' or '5' as defined on the MGS ftp site or the MWI documentation website.  The nameing convention for OWI data tables will be to begin with the letter 'o', and version '1', and end with the same suffix as the corresponding CWI data table.  Non-filtering views on the data tables are named 'vo1' followed by the table suffix. Filtering views on the data tables are named 'v1' followed by a descriptive suffix.
 
-	Beginning in version c4.4.0, the purpose of the identifiers table is changed from holding only alternate identifiers to holding all identifiers, and also to add uniqueness constraints on identifiers.  The identifiers in c4id as served from the CWI database do not meet the uniqueness constraints for MNU identifiers, so a new table  o1id is created that mirrors c4id, but only compliant identifiers are copied from c4id and c4ix into c1id.  
-	Beginning in version c4.4.#, attempts will be made to resolve non-compliant identifiers in c4id and so bring them into o1id.  This also involves de-duplicating  c4ix and the other data tables.  The corrections might be made in the c4-- tables, or in new o1-- tables.
+	Beginning in version c5.4.0, the purpose of the identifiers table is changed from holding only alternate identifiers to holding all identifiers, and also to add uniqueness constraints on identifiers.  The identifiers in c5id as served from the CWI database do not meet the uniqueness constraints for MNU identifiers, so a new table  o1id is created that mirrors c5id, but only compliant identifiers are copied from c5id and c5ix into c1id.  
+	Beginning in version c5.4.#, attempts will be made to resolve non-compliant identifiers in c5id and so bring them into o1id.  This also involves de-duplicating  c5ix and the other data tables.  The corrections might be made in the c5-- tables, or in new o1-- tables.
 	
 	The principal columns in o1id are:
-	wellid INTEGER 	-- same as c4id 
-	IDENTIFIER TEXT	-- same as c4id 
-	ID_TYPE TEXT  		-- same as c4id
-	IDPROG TEXT		-- same as c4id
+	wellid INTEGER 	-- same as c5id 
+	IDENTIFIER TEXT	-- same as c5id 
+	ID_TYPE TEXT  		-- same as c5id
+	IDPROG TEXT		-- same as c5id
 	MNU INTEGER		-- 0 <= MNU <= 20 
 	sMNU INTEGER 		-- 0 or 1 
 	mexplain    		-- describe data integrity error
@@ -112,7 +112,7 @@ Notes on the MNU Identifier Model, defined beginning with version c4.4.0.
 	mresolved   		-- whether or how resolved
 	mremark 		-- extra comments
 
-	The latter 4 columns are similarly added to c4id, and to o1id_matches, which holds relational information needed to perform some corrections.
+	The latter 4 columns are similarly added to c5id, and to o1id_matches, which holds relational information needed to perform some corrections.
 
 	The real goal is to see the source data in CWI corrected.  The intermediate goals of applying corrections to o1-- tables are to try out the MNU identifier model, and to obtain a more useful data set.
 	
@@ -128,10 +128,10 @@ Logic for merging well records.
 	
 		Step 1) Edit each data table (except o1id) to collect valid data in the records for wellid 101.
 		Step 2) Edit o1id to point all identifiers to the same wellid: 
-			"UPDATE c4id SET wellid=101, sMNU=0  WHERE wellid=202;" 
+			"UPDATE c5id SET wellid=101, sMNU=0  WHERE wellid=202;" 
 		Step 3) Finally delete records for wellid 202 in each data table.
 
-Notes on Modified Identifier Model (version c4.4.2)	
+Notes on Modified Identifier Model (version c5.4.2)	
 	
 	In this model, history tables are added, and merge undo is implemented.
 	
@@ -142,19 +142,19 @@ Notes on Modified Identifier Model (version c4.4.2)
 	Logic for merging well records.	Let's assume that wellid 202 is to be merged into wellid 101.  In general, if the lower valued wellid is a MUN, then it should be kept and the higher valued wellid removed.  
 	
 		Step 1) Edit the identifiers table to point all identifiers to the same wellid: 
-			"UPDATE c4id SET wellid=101, sMNU=0 WHERE wellid=202;" 
+			"UPDATE c5id SET wellid=101, sMNU=0 WHERE wellid=202;" 
 		Note that the sMNU flag must be unset. Otherwise it is quite elementary.
 			
-		Trigger tr_c4id_update fires. This is an "AFTER UPDATE" trigger.
+		Trigger tr_c5id_update fires. This is an "AFTER UPDATE" trigger.
 			A) If NEW.wellid = OLD.wellid, EXIT or write to history and then EXIT.
 			   If NEW.wellid != OLD.wellid: go to step B
 			B) create merge documenters in the merge table)
-				CREATE TABLE c4merges (mergeid, wellid_retained, wellid_deleted, merge_action, merge_dt, merge_user)
+				CREATE TABLE c5merges (mergeid, wellid_retained, wellid_deleted, merge_action, merge_dt, merge_user)
 			B) Write records for wellid 202 to history, with the merge identifier.	 
-			C) Delete records for wellid 202 in c4ix. This will fire Trigger tr_c4ix_delete
-				"DELETE FROM c4ix WHERE wellid=OLD.wellid"
+			C) Delete records for wellid 202 in c5ix. This will fire Trigger tr_c5ix_delete
+				"DELETE FROM c5ix WHERE wellid=OLD.wellid"
 		
-		Trigger tr_c4ix_delete fires. This is a "BEFORE DELETE" trigger.
+		Trigger tr_c5ix_delete fires. This is a "BEFORE DELETE" trigger.
 		(see section "5. Cautions On The Use Of BEFORE triggers" in https://www.sqlite.org/lang_createtrigger.html  The trigger should not modify the deleted row(s). Since it only writes to history, it should be alright.
 			A) If a merge identifier exists, then write the deleted and retained records to history, with the merge documenters.
 				INSERT INTO h1ix (field list, HISTORY_REASON, MERGE_ID, HISTORY_DT, HISTORY_USER)
@@ -163,33 +163,33 @@ Notes on Modified Identifier Model (version c4.4.2)
 				INSERT INTO h1ix (field list, ")
 				  SELECT (field list, "RETAINED", "MERGE", mergeid, merge_dt, merge_user)
 				  WHERE wellid = NEW.wellid
-			B) Continue on to the delete the OLD.wellid in c4ix.  Foreign key constraint then cause cascading deletes in the remaining data files.
+			B) Continue on to the delete the OLD.wellid in c5ix.  Foreign key constraint then cause cascading deletes in the remaining data files.
 			
-		Triggers tr_c4**_delete fire.  These are all "BEFORE DELETE" triggers.
+		Triggers tr_c5**_delete fire.  These are all "BEFORE DELETE" triggers.
 			A) If a merge identifier exists, then write the deleted and retained records to history, with the merge documenters.
-				(same structure as trigger tr_c4ix_delete)
+				(same structure as trigger tr_c5ix_delete)
 			
 		Step 2) The user has to review the retained records for wellid 101 and the history records for wellid 202, and make sure that useful/correct information is retained. 
 			A) UPDATE retained records with suplemental information from matching history records.
-			B) INSERT unmatched history records with wellid 202 into c4** tables using wellid 101.
+			B) INSERT unmatched history records with wellid 202 into c5** tables using wellid 101.
 			
 	Logic for Un-mergeing well records.	Let's assume that wellid 202 was merged into wellid 101.
-	The retained wellid is known in table c4ix. 
-	The c4merge table is consulted for the mergeid, timestamp, and deleted wellid value.
-	If there have been no subsequent edits to c4 tables, then:
+	The retained wellid is known in table c5ix. 
+	The c5merge table is consulted for the mergeid, timestamp, and deleted wellid value.
+	If there have been no subsequent edits to c5 tables, then:
 		turn triggers off (see https://stackoverflow.com/questions/2250959/how-to-handle-a-missing-feature-of-sqlite-disable-triggers )		
 		PRAGMA FOREIGN KEYS OFF
 		for tablename in (list of data tables):
-			DELETE from c4** WHERE wellid = 101
-			INSERT INTO c4**(field list) SELECT fieldlist FROM h4** 
+			DELETE from c5** WHERE wellid = 101
+			INSERT INTO c5**(field list) SELECT fieldlist FROM h4** 
 				WHERE mergeid = ? AND merge_action = "MERGE" AND wellid IN (101, 202);
-			INSERT INTO c4merges (mergeid, wellid_retained, wellid_deleted, merge_dt, merge_user)
+			INSERT INTO c5merges (mergeid, wellid_retained, wellid_deleted, merge_dt, merge_user)
 				VALUES (mergeid, 101, 202, "UNMERGE", current_dt, current_user) 
 		turn triggers on
 		PRAGMA FOREIGN KEYS ON
 
-	If thre have been subsequent edits to c4 tables, those will be restricted to the retained wellid 101.  
-		1) Run the DELETE from c4** with triggers on, creating a new history thread
+	If thre have been subsequent edits to c5 tables, those will be restricted to the retained wellid 101.  
+		1) Run the DELETE from c5** with triggers on, creating a new history thread
 		2) Restore records from the original merge history thread with triggers off.
 		3) Manually compare the restored records with the both history thread records to reclaim  valid information in the new history thread that was added since the original merge history thread.
 		

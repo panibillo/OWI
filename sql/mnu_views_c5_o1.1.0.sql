@@ -1,27 +1,27 @@
 /* CWI SCHEMA
 
-Version:    c4.4.0
-Date:       2021-02-10
+Version:    c5.4.0
+Date:       2025-09-21
 Author:     William Olsen
 
 These are DDL statements for an SqlLite version of the CWI database.
-These statements create views of the c4 data tables that expose the default Unique Well Number only, utilizing View v1idp
+These statements create views of the c5 data tables that expose the default Unique Well Number only, utilizing View v1idp
 
 This version:
-    - Contains the c4 data tables
-    - Adds table c4locs for well coordinates.
-    - Adds rowid and wellid to each c4 data table
-    - Adds Foreign Key constraints to all tables, wellid -> c4ix(wellid)
-    + Makes c4id into the main location for all well identifiers.
-        + Add all Unique Well Numbers in c4ix to c4id.
-        + Add conditional unique indices on c4id to enforce uniqueness.
-        + Add Views on c4id to simplify using Unique Well Numbers for search
+    - Contains the c5 data tables
+    - Adds table c5locs for well coordinates.
+    - Adds rowid and wellid to each c5 data table
+    - Adds Foreign Key constraints to all tables, wellid -> c5ix(wellid)
+    + Makes c5id into the main location for all well identifiers.
+        + Add all Unique Well Numbers in c5ix to c5id.
+        + Add conditional unique indices on c5id to enforce uniqueness.
+        + Add Views on c5id to simplify using Unique Well Numbers for search
           and for export.
         + Data, as cloned from cwi, may not pass all integrity checks.
 
 References:
 
-sql/cwischema_c4_versions.txt
+sql/cwischema_c5_versions.txt
 
 County Well Index, 2021, Database created and maintained by the Minnesota
 Geological Survey, a department of the University of Minnesota,  with the
@@ -121,7 +121,7 @@ SELECT
     A.UNUSED,
     A.ENTRY_DATE,
     A.UPDT_DATE
-FROM c4ix A
+FROM c5ix A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -143,7 +143,7 @@ SELECT
     A.ENTRY_DATE,
     A.UPDT_DATE,
     A.OTHER
-FROM c4ad A
+FROM c5ad A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -157,7 +157,7 @@ SELECT
     A.AZIMUTH,
     A.INCLIN,
     A.ANG_DEPTH
-FROM c4an A
+FROM c5an A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -203,7 +203,7 @@ SELECT
     A.DRLLR_NAME,
     A.ENTRY_DATE,
     A.UPDT_DATE
-FROM c4c1 A
+FROM c5c1 A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -222,7 +222,7 @@ SELECT
     A.MATERIAL,
     A.AMOUNT,
     A.UNITS
-FROM c4c2 A
+FROM c5c2 A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -238,7 +238,7 @@ SELECT
     A.FLOW_RATE,
     A.DURATION,
     A.PUMP_MEAS
-FROM c4pl A
+FROM c5pl A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -250,7 +250,7 @@ SELECT
     S.IDENTIFIER,
     A.SEQ_NO,
     A.REMARKS
-FROM c4rm A
+FROM c5rm A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -269,7 +269,7 @@ SELECT
     A.LITH_PRIM,
     A.LITH_SEC,
     A.LITH_MINOR
-FROM c4sts A
+FROM c5sts A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -290,7 +290,7 @@ SELECT
     A.PROGRAM,
     A.ENTRY_DATE,
     A.UPDT_DATE
-FROM c4wl A
+FROM c5wl A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;
@@ -365,7 +365,7 @@ SELECT
     A.SWLDATE,
     A.SWLAVGMEAS,
     A.SWLAVGELEV
-FROM c4locs A
+FROM c5locs A
 LEFT JOIN v1ids S
   ON A.wellid = S.wellid
 ;

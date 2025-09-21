@@ -1,7 +1,7 @@
 /* CWI SCHEMA
 
-Version:    c4.4.0
-Date:       2022-04-30
+Version:    c5.4.0
+Date:       2025-09-21
 Author:     William Olsen
 
 Queries to reinitialize o1id so that it can be filled from scratch.

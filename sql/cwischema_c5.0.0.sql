@@ -1,17 +1,17 @@
 /* CWI SCHEMA
 
-Version:    c4.0.0
-Date:       2021-02-10
+Version:    c5.0.0
+Date:       2025-09-21
 Author:     William Olsen
 
 These are DDL statements for an SqlLite version of the CWI database.
 
 This version:
-    + Contains the c4 data tables
+    + Contains the c5 data tables
 
 References:
 
-sql/cwischema_c4_versions.txt
+sql/cwischema_c5_versions.txt
 
 County Well Index, 2021, Database created and maintained by the Minnesota
 Geological Survey, a department of the University of Minnesota,  with the
@@ -21,7 +21,7 @@ https://www.sqlite.org
 
 */
 
-CREATE TABLE c4ix (
+CREATE TABLE c5ix (
     RELATEID    TEXT    NOT NULL,
     COUNTY_C    INTEGER,
     UNIQUE_NO   TEXT,
@@ -74,7 +74,7 @@ CREATE TABLE c4ix (
     UPDT_DATE   INTEGER
 );
 
-CREATE TABLE c4ad (
+CREATE TABLE c5ad (
     RELATEID   TEXT    NOT NULL,
     NAME       TEXT,
     ADDTYPE_C  CHAR,
@@ -90,7 +90,7 @@ CREATE TABLE c4ad (
     OTHER       TEXT
 );
 
-CREATE TABLE c4an (
+CREATE TABLE c5an (
     RELATEID    TEXT    NOT NULL,
     C5AN_SEQ_NO REAL,
     AZIMUTH        INTEGER,
@@ -98,7 +98,7 @@ CREATE TABLE c4an (
     ANG_DEPTH    INTEGER
 );
 
-CREATE TABLE c4c1 (
+CREATE TABLE c5c1 (
     RELATEID    TEXT    NOT NULL,
     DRILL_METH  CHAR,
     DRILL_FLUD  CHAR,
@@ -138,7 +138,7 @@ CREATE TABLE c4c1 (
     UPDT_DATE   INTEGER
 );
 
-CREATE TABLE c4c2 (
+CREATE TABLE c5c2 (
     RELATEID    TEXT    NOT NULL,
     CONSTYPE    CHAR,
     FROM_DEPTH  REAL,
@@ -151,14 +151,14 @@ CREATE TABLE c4c2 (
     UNITS       CHAR
 );
 
-CREATE TABLE c4id (
+CREATE TABLE c5id (
     RELATEID    TEXT    NOT NULL,
     IDENTIFIER  TEXT    NOT NULL,
     ID_TYPE     TEXT,
     ID_PROG     TEXT
 );
 
-CREATE TABLE c4pl (
+CREATE TABLE c5pl (
     RELATEID    TEXT    NOT NULL,
     PUMPTESTID  INTEGER,
     TEST_DATE   INTEGER,
@@ -168,13 +168,13 @@ CREATE TABLE c4pl (
     PUMP_MEAS   REAL
 );
 
-CREATE TABLE c4rm (
+CREATE TABLE c5rm (
     RELATEID    TEXT    NOT NULL,
     SEQ_NO      INTEGER,
     REMARKS     TEXT
 );
 
-CREATE TABLE c4st (
+CREATE TABLE c5st (
     RELATEID    TEXT    NOT NULL,
     DEPTH_TOP   REAL,
     DEPTH_BOT   REAL,
@@ -187,7 +187,7 @@ CREATE TABLE c4st (
     LITH_MINOR  TEXT
 );
 
-CREATE TABLE c4wl (
+CREATE TABLE c5wl (
     RELATEID    TEXT    NOT NULL,
     MEAS_TYPE   TEXT,
     MEAS_DATE   INTEGER,

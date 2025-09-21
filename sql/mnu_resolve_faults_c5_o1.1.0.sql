@@ -1,5 +1,10 @@
 /*
-Automatically insert identifiers from c4id into o1id that have unverified and
+
+Version:    c5
+Date:       2025-09-21
+Author:     William Olsen
+
+Automatically insert identifiers from c5id into o1id that have unverified and
 problematic relations to wellids.  These include all of the identifiers 
 identified in mnu_insert_01.1.0.sql that have MNU >1, and mmid not null.
 
@@ -8,7 +13,7 @@ table o1id.  But these modified relationships are not verified, and are for
 demonstration purposes only.  The purpose is to test the complex identifier
 relations permitted by the MNU identifier model as explained in MNU_Model.pdf.
 
-For reference to un-modified data, use table c4id.
+For reference to un-modified data, use table c5id.
 
 Several exploration queries are provided
 
@@ -16,12 +21,12 @@ select     mnu, smnu, id_type, id_prog, mmid, count(*) from o1id
   group by mnu, smnu, id_type, id_prog, mmid
   order by mnu, smnu, id_type, id_prog, mmid;
 
-select     mnu, smnu, id_type, id_prog, mmid, mexplain, count(*) from c4id
+select     mnu, smnu, id_type, id_prog, mmid, mexplain, count(*) from c5id
   where mmid > 0
   group by mnu, smnu, id_type, id_prog, mmid, mexplain
   order by mnu, smnu, id_type, id_prog, mmid, mexplain;
 
-select     mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremark, count(*) from c4id
+select     mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremark, count(*) from c5id
   where mmid > 0
   group by mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremark
   order by mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremark;
@@ -29,9 +34,9 @@ select     mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremar
 */
 
 -- C4ID_KNOWN_XREFS
--- Records where the well is given 2 wellids in c4ix, and they are cross-referenced
--- in c4id by linking each identifier with the other wellid
--- Identified in c4id_match with wellid1 and wellid2.  Where wellid1 < wellid2.
+-- Records where the well is given 2 wellids in c5ix, and they are cross-referenced
+-- in c5id by linking each identifier with the other wellid
+-- Identified in c5id_match with wellid1 and wellid2.  Where wellid1 < wellid2.
 -- Choose to retain wellid1 as correct and wellid2 as redundant.
 -- W-series cross refs are assumed errors and not inserted.
 --
@@ -43,9 +48,9 @@ INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
 SELECT o.wellid1, c2.RELATEID, c.IDENTIFIER, c.ID_TYPE, c.ID_PROG,
   1 AS MNU, 1 AS sMNU, c.mmid, c.mexplain, 'cross referenced in CWI' as mremark
 FROM o1id_match o
-LEFT JOIN c4id c
+LEFT JOIN c5id c
   ON o.wellid2 = c.wellid 
-LEFT JOIN c4id c2
+LEFT JOIN c5id c2
   ON o.wellid1 = c2.wellid
 WHERE c.mexplain = 'C4ID_KNOWN_XREFS'
   AND c.ID_PROG = 'MNUNIQ'
@@ -59,9 +64,9 @@ INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
 SELECT o.wellid1, c2.RELATEID, c2.IDENTIFIER, c2.ID_TYPE, c2.ID_PROG,
   1 AS MNU, 0 AS sMNU, c2.mmid, c2.mexplain, 'cross referenced in CWI' as mremark
 FROM o1id_match o
-LEFT JOIN c4id c
+LEFT JOIN c5id c
   ON o.wellid2 = c.wellid 
-LEFT JOIN c4id c2
+LEFT JOIN c5id c2
   ON o.wellid1 = c2.wellid
 WHERE c.mexplain = 'C4ID_KNOWN_XREFS'
   AND c.mmid=11
@@ -74,7 +79,7 @@ INSERT INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
 SELECT o.wellid1, c2.RELATEID, c2.IDENTIFIER, c2.ID_TYPE, c2.ID_PROG,
        12 AS MNU, 0 AS sMNU, c2.mmid, c2.mexplain, 'unconfirmed. example merge' as mremark
 FROM o1id_match o
-LEFT JOIN c4id c2
+LEFT JOIN c5id c2
   ON o.identifier1 = c2.identifier
 WHERE o.mmid = 12
   AND c2.mmid=12
@@ -82,12 +87,12 @@ WHERE o.mmid = 12
 
 -- 13
 -- C4ID_UNRESOLVED_MERGES_WMWSR : presumed to be errors. IDENTIFIERs missing 'H'.
-UPDATE c4id set mplan = 'Do not use. IDENTIFIER probably missing H'
+UPDATE c5id set mplan = 'Do not use. IDENTIFIER probably missing H'
 where mmid = 13;
 
 -- 14
 -- C4ID_UNRESOLVED_MERGES_WSERIES : presumed to be errors. Cannot resolve using MWI.
-UPDATE c4id set mplan = 'Do not use. IDENTIFIER prossibly mixed up'
+UPDATE c5id set mplan = 'Do not use. IDENTIFIER prossibly mixed up'
 where mmid = 14;
 
 -- 15 
@@ -96,7 +101,7 @@ INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mplan, mremark)
 SELECT wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   8, 0, mmid, mexplain, 'Resolve manually', 'See o1id_match for candidate match.'
-FROM c4id
+FROM c5id
 WHERE mmid = 15
 ;
 
@@ -106,7 +111,7 @@ INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mplan, mremark)
 SELECT wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   8, 0, mmid, mexplain, 'Resolve manually', 'See o1id_match for matches.'
-FROM c4id
+FROM c5id
 WHERE mmid = 16
 ;
 
@@ -119,13 +124,13 @@ INSERT into o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mremark)
 select wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   9 as MNU, 0 as sMNU, mmid, mexplain, 'unconfirmed' as mremark
-from c4id where mmid=17;
+from c5id where mmid=17;
 
 -- 17b 
--- Create the well set entries in c4ix.
+-- Create the well set entries in c5ix.
 -- Use modified H-num as wellid: 8000000000 + numeric part of H-number.
 -- Grab basic well information from the the first individual linked wellid.
-INSERT INTO c4ix (
+INSERT INTO c5ix (
     wellid, unique_no, RELATEID, COUNTY_C, WELLNAME, 
     TOWNSHIP, RANGE, RANGE_DIR, SECTION, SUBSECTION, MGSQUAD_C,
     --ELEVATION, ELEV_MC, 
@@ -155,10 +160,10 @@ select  S.wellid, S.unique_no, S.wellid as RELATEID,
 from (select '8000' || substr(IDENTIFIER,2,6)  as wellid, 
               IDENTIFIER as unique_no, 
               min(wellid) as linkid
-      from c4id
+      from c5id
       where mmid=17  
       group by identifier) as S
-left join c4ix x
+left join c5ix x
   on S.linkid = x.wellid;
   
 -- 17c Create well set entries in o1id for the well set IDENTIFIERS
@@ -176,13 +181,13 @@ SELECT CAST('8000' || substr(IDENTIFIER,2,6) AS INTEGER)  as wellid,
        'C4ID_H_IS_MULTY_OR_BAD_REF' as mexplain, 
        'OWI synthetic wellid and RELATEID' as mplan,
        'unverified' as mremark
-FROM c4id
+FROM c5id
 WHERE mmid=17  
 GROUP BY IDENTIFIER;
 
 -- -- Inspect results of effort 17
 -- select mnu, smnu, id_type, id_prog, mexplain, mplan, mresolved, mremark, count(*) 
---   from c4id
+--   from c5id
 --   where mmid=17
 --   group by mnu, smnu, id_type, id_prog, mexplain, mplan, mresolved, mremark
 --   order by mnu, smnu, id_type, id_prog, mexplain, mplan, mresolved, mremark;
@@ -194,17 +199,17 @@ GROUP BY IDENTIFIER;
 --   order by mnu, smnu, id_type, id_prog, mexplain, mplan, mresolved, mremark;
 -- 
 -- select WELLNAME, min(wellid), max(wellid), count(*)
---   from c4ix
+--   from c5ix
 --   where WELLNAME='well set';
 
 
--- Part 2: append remaining records from c4ix
--- (562532 records inserted, out of 563336 total in c4ix)
+-- Part 2: append remaining records from c5ix
+-- (562532 records inserted, out of 563336 total in c5ix)
 INSERT INTO o1id (wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, MNU, sMNU,
                   mmid)
-SELECT x.wellid, x.RELATEID, x.UNIQUE_NO, 'c4ix', 'MNUNIQ', 1, 1, 1
+SELECT x.wellid, x.RELATEID, x.UNIQUE_NO, 'c5ix', 'MNUNIQ', 1, 1, 1
 --     , o.identifier, o.MNU, o.sMNU, o.mmid
-FROM c4ix x
+FROM c5ix x
 LEFT JOIN o1id_match m1
   ON x.UNIQUE_NO = m1.identifier1
 LEFT JOIN o1id_match m2
@@ -216,14 +221,14 @@ where m1.wellid1 is null
   and (o.wellid is null OR o.sMNU=0)
 ;
 
--- Part 2b: append remaining records from c4ix
+-- Part 2b: append remaining records from c5ix
 -- 7 records
 INSERT INTO o1id (wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, 
                   MNU, sMNU, mmid, mexplain, mplan, mremark)
-SELECT x.wellid, x.RELATEID, x.UNIQUE_NO, 'c4ix', 'MNUNIQ', 
+SELECT x.wellid, x.RELATEID, x.UNIQUE_NO, 'c5ix', 'MNUNIQ', 
        1, 1, i.mmid, i.mexplain, 'unconfirmed', 'resolution Part 2b'
-FROM c4ix x
-left join c4id i
+FROM c5ix x
+left join c5id i
   on x.unique_no = i.identifier
 left join o1id o
   on x.Unique_NO = o.identifier
@@ -247,7 +252,7 @@ WHERE IDENTIFIER LIKE ('H%') and MNU=1;
 UPDATE o1id 
 SET IDENTIFIER = WNUM_FORMAT(A.identifier, x.county_c)
 FROM o1id A
-LEFT JOIN c4ix x
+LEFT JOIN c5ix x
   ON A.wellid = x.wellid
 WHERE (A.id_prog in ('WSERIES','WMWSR') 
        OR (A.id_type='CNTY' AND A.id_prog='ULID'))

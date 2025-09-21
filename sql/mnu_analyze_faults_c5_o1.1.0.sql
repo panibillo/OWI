@@ -1,17 +1,17 @@
 /* CWI SCHEMA
 
-Version:    c4.4.0
-Date:       2021-02-19
+Version:    c5.4.0
+Date:       2025-09-21
 Author:     William Olsen
 
 These are queries for populating the o1id table with identifiers contained in
-the c4ix or c4locs tables in the MGS version of c4.  The data is first imorted 
-to c4id, then analyzed, and finally copied into o1id. The order that queries
+the c5ix or c5locs tables in the MGS version of c5.  The data is first imorted 
+to c5id, then analyzed, and finally copied into o1id. The order that queries
 are run in is critical.
 
 The o1id table implements version 4 of the MNU identifier model.  The MNU 
 identifier model has data integrity constraints on identifiers that the data in
-the c4ix and c4id tables may violate.  The queries in this file fail when they 
+the c5ix and c5id tables may violate.  The queries in this file fail when they 
 attempt to append records to o1id that are not MNU-compliant.
 
 The queries attempt to correctly identify which data is non-compliant, to
@@ -26,9 +26,9 @@ wellids that should be merged.
 
 Most queries are broken into 3 parts: First an exploratory query that simply
 displays the found records and the the planned labels, second a query that 
-updates labels in c4id, and third a query to populate o1id_match.
+updates labels in c5id, and third a query to populate o1id_match.
 
-Comparisson of c4id to o1id can identify every case where data has been 
+Comparisson of c5id to o1id can identify every case where data has been 
 modified, and traces are left in both tables to indicate the reason for the 
 change.  In some cases the reason is limitations in the CWI identifier model,
 but in other cases the reason is an actual error in the CWI data. In the latter
@@ -37,7 +37,7 @@ should be provided sufficient to guide corrections.
 
 There are a number of individual queries that are run in succession. Each 
 identifies a particular group of non-compliant identifiers, and updates 
-labeling columns in c4id.  In each case the MNU value is set to a value 
+labeling columns in c5id.  In each case the MNU value is set to a value 
 between 10 and 20.    These values then determine how the row is appended 
 to the o1id table.  The MNU values are reassigned to Recal that in the MNU 
 identifier model, regular Minnesota Unique Well Numbers are assigned MNU=1, 
@@ -46,34 +46,34 @@ MNU values of MNU-compliant records.
 
 In version 4 of the MNU identifier model, MNU compliant identifiers  have MNU 
 values from 1 to 5, and values from 6 to 9 are used to flag identifiers that 
-need some kind of manual evaluation.  When the data is copied from c4id to 
+need some kind of manual evaluation.  When the data is copied from c5id to 
 o1id, MNU values from 10 to 20 are translated to to 1 to 9 range.
 
 There are sometimes recent well records found in the shape files used to fill 
-the c4locs table that are not yet in c4ix or c4id.  These Recent records have 
-to be appended to c4ix when Foreign Keys are implemented, because c4locs.wellid 
-references c4ix.wellid. Why does this matter here?  When identifiers are added 
-to c4id from c4ix, their origin is recorded by setting c4id.ID_TYPE='c4ix'.
+the c5locs table that are not yet in c5ix or c5id.  These Recent records have 
+to be appended to c5ix when Foreign Keys are implemented, because c5locs.wellid 
+references c5ix.wellid. Why does this matter here?  When identifiers are added 
+to c5id from c5ix, their origin is recorded by setting c5id.ID_TYPE='c5ix'.
 
-c4.4.0 version:
-    - Contains the c4 data tables
-    - Adds table c4locs for well coordinates.
-    - Adds rowid and wellid to each c4 data table
-    - Adds Foreign Key constraints to all tables, wellid -> c4ix(wellid)
+c5.4.0 version:
+    - Contains the c5 data tables
+    - Adds table c5locs for well coordinates.
+    - Adds rowid and wellid to each c5 data table
+    - Adds Foreign Key constraints to all tables, wellid -> c5ix(wellid)
     + Makes o1id into the main table for all well identifiers.
-        + Add all Unique Well Numbers in c4ix & c4locs into c4id.
-            ID_TYPE = 'c4ix' or 'c4locs'; identifies the source.
+        + Add all Unique Well Numbers in c5ix & c5locs into c5id.
+            ID_TYPE = 'c5ix' or 'c5locs'; identifies the source.
             ID_PROG = 'MNUNIQ';
             sMNU = 1; These will be the default identifiers
         + Add conditional unique indices on o1id to enforce uniqueness.
         + Add Views on o1id to simplify using Unique Well Numbers for search
           and for export.
-        + Data, as cloned from cwi is found in c4id. But it may not pass all 
+        + Data, as cloned from cwi is found in c5id. But it may not pass all 
 		  integrity checks required by o1id.
   
 References:
 
-sql/cwischema_c4_versions.txt
+sql/cwischema_c5_versions.txt
 
 County Well Index, 2021, Database created and maintained by the Minnesota
 Geological Survey, a department of the University of Minnesota,  with the
@@ -83,12 +83,12 @@ http://mgsweb2.mngs.umn.edu/cwi_doc/cwidoc.htm
 https://www.sqlite.org
 */
 
--- Queries on c4id & c4ix to run before modifying c4id or filling o1id.
--- Assumes that c4id.MNU has been set to (0,1).
+-- Queries on c5id & c5ix to run before modifying c5id or filling o1id.
+-- Assumes that c5id.MNU has been set to (0,1).
 -- ========================================================================= --
 
 -- 1) C4ID_KNOWN_XREFS  
---    Wells with 2 wellids, 2 entries in c4ix, and 2 entries in c4id that cross-
+--    Wells with 2 wellids, 2 entries in c5ix, and 2 entries in c5id that cross-
 --    reference each other.  These are redundant records known to CWI maintainers,
 --    that they choose to retain as redundant records.
 --
@@ -98,11 +98,11 @@ https://www.sqlite.org
 --       'C4ID_KNOWN_XREFS' as mexplain,
 --       'DELETE ixB idA' as mplan,
 --       0 as mresolved 
--- from c4id A
--- left join c4id B
+-- from c5id A
+-- left join c5id B
 --   on cast(A.wellid as text) = B.identifier
 --   and A.MNU=1 and B.MNU=1 
--- left join c4id C
+-- left join c5id C
 --   on cast(B.wellid as text) = C.identifier
 --   and B.MNU=1 and C.MNU=1 
 -- where A.wellid != B.wellid
@@ -111,15 +111,15 @@ https://www.sqlite.org
 -- order by A.wellid
 -- ;
 --
--- 1.2 set mexplain in c4id
-update c4id set  mexplain='C4ID_KNOWN_XREFS', mmid=11, MNU=11
+-- 1.2 set mexplain in c5id
+update c5id set  mexplain='C4ID_KNOWN_XREFS', mmid=11, MNU=11
 where rowid in ( 
     select A.rowid  
-    from c4id A
-    left join c4id B
+    from c5id A
+    left join c5id B
       on cast(A.wellid as text) = B.identifier
       and A.MNU in(1,11) and B.MNU in(1,11) 
-    left join c4id C
+    left join c5id C
       on cast(B.wellid as text) = C.identifier
       and B.MNU in(1,11) and C.MNU in(1,11)
     where A.wellid != B.wellid
@@ -135,11 +135,11 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_KNOWN_XREFS' as mexplain,
       'MERGE id2 INTO id1' as mplan,
        11 as mmid, 0 as mresolved 
-from c4id A
-left join c4id B
+from c5id A
+left join c5id B
   on cast(A.wellid as text) = B.identifier
   and A.MNU in(1,11) and B.MNU in(1,11)  
-left join c4id C
+left join c5id C
   on cast(B.wellid as text) = C.identifier
   and B.mmid = 11  and C.mmid = 11 
 where A.wellid <= B.wellid
@@ -151,8 +151,8 @@ where A.wellid <= B.wellid
 -- 12) C4ID_UNRESOLVED_MERGES
 -- 12.1 exploration 
 select  A.identifier,  A.wellid,  A.id_type, A.id_prog, A.MNU, a.mexplain
-from c4id A
-left join c4ix B
+from c5id A
+left join c5ix B
 on A.identifier = B.unique_no
 where A.MNU in (1,12)
   and (A.mexplain is null or A.mexplain = 'C4ID_UNRESOLVED_MERGES')
@@ -161,13 +161,13 @@ where A.MNU in (1,12)
   order by b.unique_no
 ;
 
--- 12.2 set mexplain in c4id
---select * from c4id
-update c4id set mexplain='C4ID_UNRESOLVED_MERGES', mmid=12, MNU=12
+-- 12.2 set mexplain in c5id
+--select * from c5id
+update c5id set mexplain='C4ID_UNRESOLVED_MERGES', mmid=12, MNU=12
 where rowid in ( 
     select A.rowid  
-    from c4id A
-    left join c4ix B
+    from c5id A
+    left join c5ix B
     on A.identifier = B.unique_no
     where A.MNU in (1,12)
       and A.mexplain is null 
@@ -181,7 +181,7 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_UNRESOLVED_MERGES' as mexplain,
       'MANUAL CHECK' as mplan,
        12 as mmid, 0 as mresolved 
-from c4id A
+from c5id A
 where A.mmid=12
 ;
 
@@ -189,8 +189,8 @@ where A.mmid=12
 -- 13) C4ID_UNRESOLVED_MERGES_WMWSR
 -- 13.1 exploration 
 select  A.identifier,  A.wellid,  A.id_type, A.id_prog, A.MNU, a.mexplain
-from c4id A
-left join c4ix B
+from c5id A
+left join c5ix B
 on A.identifier = B.unique_no
 where A.MNU in (1,13)
   and (A.mexplain is null or A.mexplain = 'C4ID_UNRESOLVED_MERGES_WMWSR')
@@ -199,13 +199,13 @@ where A.MNU in (1,13)
   order by B.unique_no
 ;
 
--- 13.2 set mexplain in c4id
---select * from c4id
-update c4id set mexplain='C4ID_UNRESOLVED_MERGES_WMWSR', mmid=13, MNU=13
+-- 13.2 set mexplain in c5id
+--select * from c5id
+update c5id set mexplain='C4ID_UNRESOLVED_MERGES_WMWSR', mmid=13, MNU=13
 where rowid in ( 
     select A.rowid  
-    from c4id A
-    left join c4ix B
+    from c5id A
+    left join c5ix B
     on A.identifier = B.unique_no
     where A.MNU in (1,13)
       and (A.mexplain is null or A.mexplain='C4ID_UNRESOLVED_MERGES_WMWSR')
@@ -218,7 +218,7 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_UNRESOLVED_MERGES_WMWSR' as mexplain,
       'MANUAL CHECK' as mplan,
        13 as mmid, 0 as mresolved 
-from c4id A
+from c5id A
 where A.MNU=13
 ;
 
@@ -226,8 +226,8 @@ where A.MNU=13
 -- 14) C4ID_UNRESOLVED_MERGES_WSERIES
 -- 14.1 exploration 
 select  A.identifier,  A.wellid,  A.id_type, A.id_prog, A.MNU, a.mexplain
-from c4id A
-left join c4ix B
+from c5id A
+left join c5ix B
 on A.identifier = B.unique_no
 where A.MNU in (1,14)
   and (A.mexplain is null or A.mexplain = 'C4ID_UNRESOLVED_MERGES_WSERIES')
@@ -236,13 +236,13 @@ where A.MNU in (1,14)
   order by b.unique_no
 ;
 
--- 14.2 set mexplain in c4id
---select * from c4id
-update c4id set mexplain='C4ID_UNRESOLVED_MERGES_WSERIES', mmid=14, MNU=14
+-- 14.2 set mexplain in c5id
+--select * from c5id
+update c5id set mexplain='C4ID_UNRESOLVED_MERGES_WSERIES', mmid=14, MNU=14
 where rowid in ( 
     select A.rowid  
-    from c4id A
-    left join c4ix B
+    from c5id A
+    left join c5ix B
     on A.identifier = B.unique_no
     where A.MNU in (1,14)
       and A.mexplain is null 
@@ -256,7 +256,7 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_UNRESOLVED_MERGES_WSERIES' as mexplain,
       'MNU=14, MANUAL CHECK' as mplan,
        14 as mmid, 0 as mresolved 
-from c4id A
+from c5id A
 where A.MNU=14
 ;
 
@@ -270,8 +270,8 @@ where A.MNU=14
 --       'C4ID_BAD_LINKS_OR_REDUNDANT_WELLS' as mexplain,
 --       'MNU=9, MANUAL FIX' as mplan,
 --       0 as mresolved 
--- from c4id A
--- left join c4id B
+-- from c5id A
+-- left join c5id B
 --   on A.identifier = B.identifier
 --   and A.MNU=1 and B.MNU=1 
 -- where 
@@ -279,12 +279,12 @@ where A.MNU=14
 --   and A.identifier like('%W%')
 -- ;
 
--- 15.2 set mexplain in c4id  -- 74 rows
-update c4id set mexplain='C4ID_BAD_LINKS_OR_REDUNDANT_WELLS', mmid=15, MNU=15
+-- 15.2 set mexplain in c5id  -- 74 rows
+update c5id set mexplain='C4ID_BAD_LINKS_OR_REDUNDANT_WELLS', mmid=15, MNU=15
 where rowid in (
 select A.rowid 
-from c4id A
-left join c4id B
+from c5id A
+left join c5id B
   on A.identifier = B.identifier
   and A.MNU=1 and B.MNU=1 
 where 
@@ -300,8 +300,8 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_BAD_LINKS_OR_REDUNDANT_WELLS' as mexplain,
       'MNU=9, MANUAL FIX' as mplan,
        A.mmid, 0 as mresolved 
-from c4id A
-left join c4id B
+from c5id A
+left join c5id B
   on A.identifier = B.identifier
   and A.mmid=15 and B.mmid=15 
 where 
@@ -320,30 +320,30 @@ where
 --       'MNU=8, MANUAL FIX' as mplan,
 --       0 as mresolved 
 --       ,X.WELLID,Y.WELLID,X.USE_C, Y.USE_C
--- from c4id A
--- left join c4id B
+-- from c5id A
+-- left join c5id B
 --   on A.wellid = B.wellid
 --   and A.MNU=1 and B.MNU=1 
--- left join c4ix X
+-- left join c5ix X
 --   on X.wellid = A.wellid
--- left join c4ix Y
+-- left join c5ix Y
 --   on Y.wellid = B.wellid
 -- where A.identifier < B.identifier 
 --   and A.identifier like ('H%')
 --   and B.identifier like ('H%')
 -- order by A.wellid;
 --
--- 16.2 C4ID_1WELL_ASSIGNED_2HNUMBERS update c4id  -- 42 rows
-update c4id set mexplain='C4ID_1WELL_ASSIGNED_2HNUMBERS', mmid = 16, MNU=16
+-- 16.2 C4ID_1WELL_ASSIGNED_2HNUMBERS update c5id  -- 42 rows
+update c5id set mexplain='C4ID_1WELL_ASSIGNED_2HNUMBERS', mmid = 16, MNU=16
 where rowid in (
    select A.rowid
-   from c4id A
-    left join c4id B
+   from c5id A
+    left join c5id B
       on A.wellid = B.wellid
       and A.MNU=1 and B.MNU=1 
-    left join c4ix X
+    left join c5ix X
       on X.wellid = A.wellid
-    left join c4ix Y
+    left join c5ix Y
       on Y.wellid = B.wellid
     where A.identifier != B.identifier 
       and A.identifier like ('H%')
@@ -357,12 +357,12 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_1WELL_ASSIGNED_2HNUMBERS' as mexplain,
       'MANUAL FIX' as mplan,
        16 as mmid, 0 as mresolved 
-from c4id A
-left join c4id B
+from c5id A
+left join c5id B
   on A.wellid = B.wellid
-left join c4ix X
+left join c5ix X
   on X.wellid = A.wellid
-left join c4ix Y
+left join c5ix Y
   on Y.wellid = B.wellid
 where A.mmid=16 and B.mmid=16
   and A.identifier < B.identifier 
@@ -379,8 +379,8 @@ where A.mmid=16 and B.mmid=16
 --      'C4ID_H_IS_MULTY_OR_BAD_REF' as mexplain,
 --      'MNU=7, ASSUME_MULTIWELL_H' as mplan,
 --      0 as mresolved 
---from c4id A
---left join c4id B
+--from c5id A
+--left join c5id B
 --  on A.identifier = B.identifier
 --  and A.MNU=1 and B.MNU=1 
 --where 
@@ -388,12 +388,12 @@ where A.mmid=16 and B.mmid=16
 --  and A.identifier like('%H%')
 --;
 --
--- 17.2  update c4id  -- 1803 rows
-update c4id set mexplain='C4ID_H_IS_MULTY_OR_BAD_REF', mmid = 17, MNU=9
+-- 17.2  update c5id  -- 1803 rows
+update c5id set mexplain='C4ID_H_IS_MULTY_OR_BAD_REF', mmid = 17, MNU=9
 where rowid in (
     select A.rowid 
-    from c4id A
-    left join c4id B
+    from c5id A
+    left join c5id B
       on A.identifier = B.identifier
       and A.MNU=1 and B.MNU=1 
     where 
@@ -407,15 +407,15 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_H_IS_MULTY_OR_BAD_REF' as mexplain,
       'ASSUME_MULTIWELL_H' as mplan,
        17 as mmid, 0 as mresolved 
-from c4id A
+from c5id A
 where A.mmid=17
 ;
  
--- --18) Final check that there are no duplicate MNU identifiers in c4id
+-- --18) Final check that there are no duplicate MNU identifiers in c5id
 -- --18.1) Exploration:  should return count=0. Depends on prior queries changing the MNU number from 1.
 -- select count(A.rowid)  
---  from c4id A
---  left join c4id B
+--  from c5id A
+--  left join c5id B
 --    on A.identifier = B.identifier
 --    and A.MNU=1 and B.MNU=1 
 --  where 
@@ -423,15 +423,15 @@ where A.mmid=17
 -- ;
 -- 
 -- -- -- summarize results:
---  select mmid, mexplain, MNU, count(*) from c4id group by mmid, mexplain, MNU order by mmid, mexplain;
+--  select mmid, mexplain, MNU, count(*) from c5id group by mmid, mexplain, MNU order by mmid, mexplain;
 --  select mmid, mexplain, mplan, count(*) from o1id_match group by mmid, mexplain, mplan, order by mmid;
 
 -- 18.2) Final cleanup to ensure compliance with UNIQUE constraints: o1id.wellid, o1id.IDENTIFIER
-update c4id set MNU=0, sMNU=0, mexplain ='C4ID_DUPLICATE_MNU_IDENTIFIER', mmid=18
+update c5id set MNU=0, sMNU=0, mexplain ='C4ID_DUPLICATE_MNU_IDENTIFIER', mmid=18
 where rowid in (
   select B.rowid
-    from c4id A
-    left join c4id B
+    from c5id A
+    left join c5id B
       on A.IDENTIFIER = B.IDENTIFIER
     where A.MNU=1   
       and B.MNU=1
@@ -445,8 +445,8 @@ select A.wellid as wellid1, A.identifier as identifier1,
       'C4ID_DUPLICATE_MNU_IDENTIFIER' as mexplain,
       'OMIT_RECORD2_FROM_o1id' as mplan,
        18 as mmid, 1 as mresolved 
-from c4id A
-left join c4id B
+from c5id A
+left join c5id B
   on A.IDENTIFIER = B.IDENTIFIER
 where A.MNU=1   
   and B.mmid=18
@@ -454,10 +454,10 @@ where A.MNU=1
 
 
 -- Finally
--- Append strictly normal MNU records from c4id: where MNU=1 and mexplain is NULL. -- 49699 rows
+-- Append strictly normal MNU records from c5id: where MNU=1 and mexplain is NULL. -- 49699 rows
 Insert into o1id (wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, MNU, sMNU)
     select wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG, MNU, sMNU
-    from c4id
+    from c5id
     where MNU=1 and mmid is null and mexplain is null
 ; 
 

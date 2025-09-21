@@ -1,13 +1,19 @@
+/*
+Version:    c5.?
+Date:       2025-09-25
+Author:     William Olsen
+*/
+
 CREATE TABLE o1sr (
     rowid    INTEGER PRIMARY KEY NOT NULL,
     wellid1  INTEGER NOT NULL,  -- Foreign key
     wellid2  INTEGER NOT NULL,  -- Foreign key  
     CONSTRAINT fk_o1sr_wellid1 FOREIGN KEY  
-        (wellid1) REFERENCES c4ix (wellid) 
+        (wellid1) REFERENCES c5ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
     CONSTRAINT fk_o1sr_wellid2 FOREIGN KEY  
-        (wellid2) REFERENCES c4ix (wellid) 
+        (wellid2) REFERENCES c5ix (wellid) 
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
     CONSTRAINT un_o1sr_wellid12
@@ -42,29 +48,29 @@ order by Mwellid;
 --  select Mwellid, wellid from v1idsets
 --  where Mwellid > wellid;
 
---update c4ix set set_c=3
+--update c5ix set set_c=3
 --  where wellid in (select Mwellid from v1idsets);
---update c4ix set set_c=2
+--update c5ix set set_c=2
 --  where wellid in (select wellid from v1idsets);
 
-select set_c, count(*) from c4ix group by set_c;
+select set_c, count(*) from c5ix group by set_c;
 
-select * from c4ix where wellid = 80003436;
+select * from c5ix where wellid = 80003436;
 select * from o1id where wellid = 80003436;
 select * from o1id 
   where wellid between 8000018636 and 8000385217
   order by wellid;
 select wellid, unique_no, use_c, set_c
-from c4ix where wellname = 'well set';
-/*update c4ix set set_c = 3 
+from c5ix where wellname = 'well set';
+/*update c5ix set set_c = 3 
   where wellname = 'well set' 
     and wellid between 8000018636 and 8000385217; */
-/*update c4ix set relateid = cast(wellid as text) 
+/*update c5ix set relateid = cast(wellid as text) 
   where wellid between 8000018636 and 8000385217; */
 
 select S.wellid1, I.IDENTIFIER, X.wellid, X.unique_no, X.use_c, X.set_c
 From o1sr S
-left join c4ix X
+left join c5ix X
   on S.wellid2 = X.wellid
 left join o1id I 
   on S.wellid1 = I.wellid
@@ -86,14 +92,14 @@ select * from o1id where mnu=3;
 
 SELECT V1.wellid1, X1.STATUS_C as status_1, I1.IDENTIFIER AS Hnum1,
        V1.wellid2, X2.STATUS_C as status_2, I2.IDENTIFIER AS Unum2
-    FROM c4ix X1
+    FROM c5ix X1
     LEFT JOIN o1id I1
       ON X1.wellid = I1.wellid
     LEFT JOIN v1sr V1
       ON X1.wellid = V1.wellid1
     LEFT JOIN o1id I2
       ON V1.wellid2 = I2.wellid
-    LEFT JOIN c4ix X2
+    LEFT JOIN c5ix X2
       ON V1.wellid2 = X2.wellid
     WHERE X1.SET_C in (3,4)     -- sets with identified members 
       AND I1.ID_PROG = 'WMWSR'  -- sealing record for the set
@@ -102,7 +108,7 @@ SELECT V1.wellid1, X1.STATUS_C as status_1, I1.IDENTIFIER AS Hnum1,
 -- Vibe wire sets
 -- Searched in the Remarks table for initial prospects. 
 -- Prospects then searched by x,y distance, and studied.
-SELECT * from c4rm where remarks like ('%VIBE WIRE%')
+SELECT * from c5rm where remarks like ('%VIBE WIRE%')
 ORDER BY wellid, seq_no;
 
 /*
@@ -114,15 +120,15 @@ ORDER BY wellid, seq_no;
 231851 (272094) ?Hscan?
 */
 /*
--- Identify set containers in c4ix 
-update c4ix set set_c = 4 where wellid in (
+-- Identify set containers in c5ix 
+update c5ix set set_c = 4 where wellid in (
       207246,
       209826,
       217868,
       201005,
       231849,
       231851);
-update c4ix set set_c = 2 where wellid in (
+update c5ix set set_c = 2 where wellid in (
       331398,331399,
       270224, 270225, 270226, 270227,
       272095, 272096, 272097,
@@ -150,7 +156,7 @@ insert or ignore into o1sr (wellid1, wellid2)
 -- set-wellid may be higher or lower than member-wellid.
 select wellid1 as setid, wellid2 as memberid from v1sr
   where wellid1 in (select wellid 
-                    from c4ix 
+                    from c5ix 
                     where set_c = 4)
   order by wellid1;
 

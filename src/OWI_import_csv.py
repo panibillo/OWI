@@ -519,15 +519,15 @@ def RUN_import_csv(C,              # OWI_version
                     fname = os.path.basename(sqlfile)
                     db.commit_db(msg=f'MNU model commands: {fname}')
                 # Resumat: (remember to set data, locs, wellids = False)
-                #       0:  mnu_MNU_relationship_o1.1.0.sql
-                #       1:  insert_c4locs_to_c4ix.sql
-                #       2:  mnu_clean_c4id_o1.1.0.sql
-                #       3:  mnu_reinit_o1id_o1.1.0.sql     
-                #       4:  mnu_analyze_faults_o1.1.0.sql 
-                #       5:  mnu_resolve_faults_o1.1.0.sql
+                #       0:  mnu_MNU_relationship_o1.1.1.sql
+                #       1:  insert_c5locs_to_c5ix.sql
+                #       2:  mnu_clean_c5id_o1.1.0.sql
+                #       3:  mnu_reinit_o1id_o1.1.1.sql     
+                #       4:  mnu_analyze_faults_o1.1.1.sql 
+                #       5:  mnu_resolve_faults_o1.1.1.sql
         
         # if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.OWI_SCHEMA_HAS_LOCS:
-        #     C4.append_c4locs_to_c4ix(db)
+        #     C4.append_c5locs_to_c5ix(db)
         #     db.commit_db()
             
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
