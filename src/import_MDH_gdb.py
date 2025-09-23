@@ -30,7 +30,7 @@ import datetime
 import os
 import shapefile
 
-from OWI_sqlite import c4db, MNU_FORMAT, RELATEID_FORMAT
+from OWI_sqlite import c5db, MNU_FORMAT, RELATEID_FORMAT
 
 from OWI_config import OWI_version as C
 
@@ -107,7 +107,7 @@ def RUN_import_sealings():
     assert os.path.exists(shpname)
     assert os.path.exists(DB_NAME)
 
-    db = c4db()
+    db = c5db()
     if not os.path.exists(shpname):
         print (f"shapefile '{shpname}' not present for import to db")
         return
@@ -154,7 +154,7 @@ def RUN_import_sealings():
     print (create)
     print ('begin: ',insert)
     # return
-    with c4db(db_name=DB_NAME, commit=True) as db:
+    with c5db(db_name=DB_NAME, commit=True) as db:
         db.query(delete)
         db.query(create)
         with shapefile.Reader(shpname) as shpf: 
@@ -334,7 +334,7 @@ def add_fields_to_MDHsealed(db_name):
     """
     
     # DO NOT run with commit = False, bad things can happen.
-    with c4db(db_name, open_db=True, commit=True) as db:
+    with c5db(db_name, open_db=True, commit=True) as db:
         if 'wellid' in db.get_column_names('MDHsealed'):
             print (f'It appears fields are already added to db:\n  {db_name}')
             return
@@ -375,7 +375,7 @@ def RUN_analyze_Hnums(db_name, commit=False):
     # s4 = f"""UPDATE o1id 
     #          SET IDENTIFIER = MNU_FORMAT(IDENTIFIER, IDENTIFIER)
     #          WHERE ID_PROG in ('WSERIES');"""
-    with c4db(db_name, open_db=True, commit=commit) as db:
+    with c5db(db_name, open_db=True, commit=commit) as db:
         return
         print ('tables = ', db.get_tablenames())
         n = db.query(f"select count(*) from {MDHsealed}")
@@ -494,26 +494,26 @@ def RUN_analyze_Hnums(db_name, commit=False):
             db.query(u1)
             
             
-        if 0: # Append records to c4 tables and o1id
-            uu = """insert into c4ix  -- 222534
+        if 0: # Append records to c5 tables and o1id
+            uu = """insert into c5ix  -- 222534
                           (wellid, owi_remark, UNIQUE_NO, RELATEID, STATUS_C, COUNTY_C, TOWNSHIP, [RANGE], RANGE_DIR, SECTION, SUBSECTION, LOC_MC  , LOC_SRC)
                     select wellid,'MDHsealed', MNUNIQ   , RELATEID, STATUS_C, COUNTY_C, TOWNSHIP, RNG    , RANGE_DIR, SECT   , SUBSECT   , LOC_DESC,'WM_gdb'
                     from MDHsealed 
                     where mmid in (56,58);
                     @
-                    insert into c4locs  -- 222534
+                    insert into c5locs  -- 222534
                           (wellid, CWI_loc   , UNIQUE_NO, RELATEID, STATUS_C, COUNTY_C, TOWNSHIP, [RANGE], RANGE_DIR, SECTION, SUBSECTION, LOC_MC  , LOC_SRC, UTME, UTMN, GEOC_DATE, WELL_LABEL)
                     select wellid,'MDHsealed', MNUNIQ   , RELATEID, STATUS_C, COUNTY_C, TOWNSHIP, RNG    , RANGE_DIR, SECT   , SUBSECT   , LOC_DESC,'WM_gdb', UTME, UTMN, GEOC_DATE, MNUNIQ
                     from MDHsealed 
                     where mmid in (56,58);
                     @
-                    insert into c4ad ---222534 (Concatination works because fields use "" rather than NULL)
+                    insert into c5ad ---222534 (Concatination works because fields use "" rather than NULL)
                           (wellid, owi_remark, RELATEID, OTHER)
                     select wellid,'MDHsealed', RELATEID, ADDR||'|'||CITY||'|'||STATE_ABB||'|'||PIN  
                       FROM MDHsealed 
                       WHERE mmid in (56,58);
                     @
-                    insert into c4rm -- 18617
+                    insert into c5rm -- 18617
                           (wellid, owi_remark, RELATEID, SEQ_NO, REMARKS)
                     select wellid,'MDHsealed', RELATEID,      1, COMMENTS 
                       FROM MDHsealed 
@@ -532,23 +532,23 @@ def RUN_analyze_Hnums(db_name, commit=False):
                       FROM MDHsealed 
                       WHERE mmid in (58);
                     @
-                    insert into c4rm -- 1105
+                    insert into c5rm -- 1105
                           (wellid, owi_remark, RELATEID, SEQ_NO, REMARKS)
                     select wellid, 'MDHsealed', RELATEID, Bseq_no, COMMENTS 
                        from MDHsealed A 
                        left join (SELECT wellid as Bwellid, (COALESCE(MAX(SEQ_NO), 0) + 1) as Bseq_no
-                                  from c4rm
+                                  from c5rm
                                   group by wellid) AS B
                          on A.wellid = B.Bwellid 
                        where A.mmid < 56
                          and A.COMMENTS >' '
                          and B.Bseq_no is not null;
                     @
-                    insert into c4rm -- 28
+                    insert into c5rm -- 28
                           (  wellid,  owi_remark,   RELATEID, SEQ_NO,   REMARKS)
                     select A.wellid, 'MDHsealed', A.RELATEID, 1     , A.COMMENTS 
                        from MDHsealed A 
-                       left join c4rm B
+                       left join c5rm B
                          on A.wellid = B.wellid 
                        where A.mmid < 56
                          and A.COMMENTS >' '
@@ -563,7 +563,7 @@ def RUN_analyze_Hnums(db_name, commit=False):
 #
 #     This just matches up the column names and generates the insert statement.
 #     """
-#     with c4db(db_name=DB_NAME, open_db=True, commit=False) as db:
+#     with c5db(db_name=DB_NAME, open_db=True, commit=False) as db:
 #         srccols = db.get_column_names('joinednulls')
 #         destcols = db.get_column_names('MDHsealed')
 #         colmap = {}
@@ -596,7 +596,7 @@ def RUN_analyze_Hnums(db_name, commit=False):
 #     u1 = """UPDATE MDHsealed SET Hcandidate = ?, BO_remark = 'H1'where rowid = ?;"""
 #     db_name=DB_NAME
 #     db_name=os.path.expanduser("~/data/MN/OWI/OWI40.sqlite")
-#     with c4db(db_name=db_name, open_db=True, commit=False) as db:
+#     with c5db(db_name=db_name, open_db=True, commit=False) as db:
 #         data = db.query(s1)
 #         print (s1)
 #         print (len(data))

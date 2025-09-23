@@ -22,7 +22,7 @@ import csv
 import json 
 import os
 
-from OWI_sqlite import c4db, qmarks
+from OWI_sqlite import c5db, qmarks
 
 from OWI_config import OWI_version as C 
 # using  C.OWI_CODETABLES_JSON  and  C.OWI_CODETABLES_DB
@@ -342,7 +342,7 @@ def codetables_create_tables(codetabledict):
     Run create table statements from codetabledict 
     """
     print (f"Running all CREATE TABLE statements in {C.OWI_CODETABLES_DB}")
-    with c4db(db_name=C.OWI_CODETABLES_DB, commit=True) as db: 
+    with c5db(db_name=C.OWI_CODETABLES_DB, commit=True) as db: 
         for tablename, tabledict in codetabledict.items():
             c = tabledict['createtable']
             db.query(c)
@@ -352,7 +352,7 @@ def codetables_load_data(codetabledict):
     """
     Insert data to codetables from codetabledict 
     """
-    with c4db(db_name=C.OWI_CODETABLES_DB, commit=True) as db: 
+    with c5db(db_name=C.OWI_CODETABLES_DB, commit=True) as db: 
         for tablename, tabledict in codetabledict.items():
             print (f'Loading data into table {tablename}')
             i = tabledict['insert']

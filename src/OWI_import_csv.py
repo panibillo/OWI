@@ -18,19 +18,80 @@ import os
 import shapefile
 
 from OWI_sqlfile import execute_statements_from_file
-from OWI_sqlite import c4db
+from OWI_sqlite import c5db
 
 from OWI_config import OWI_version as C
 from OWI_config import SWUDS_version_0 as S
 from OWI_config import versioninfo
 
 CSVEXT = C.OWI_DOWNLOAD_CWIDATACSV_EXT
+"""
+2025-09-21 new formatting notes:
+    - c5 is the new data table prefix
+    - txt is the current data table extension.  (csv files appear to be not maintained)
+    - All files contain useless 'objectid' in column 1: ignore column 1
+    - Most files contain useless empty c5xx_seq_no in column 2: ignore seq_no 
+    - Most files contain wellid as last column.
+    - Column names in c5 txt file headers are NOT capitalized, but otherwise 
+      are identical to c4 column names with a few additions, and with moving the
+      wellid column around.
+    - TBD whether the wellid column is fully reliable.
+"""
+TXT_HEADS = {
+"c5ad" : """objectid,c5ad_seq_no,relateid,name,addtype_c,house_no,street,
+ road_type,road_dir,city,state,zipcode,entry_date,updt_date,other,wellid""",
+"c5an" : """objectid,c5an_seq_no,relateid,azimuth,inclin,ang_depth,wellid""",
+"c5c1" : """objectid,relateid,drill_meth,drill_flud,hydrofrac,hffrom,hfto,
+ case_mat,case_joint,case_top,drive_shoe,case_type,screen,ohtopfeet,ohbotfeet,
+ screen_mfg,screen_typ,ptlss_mfg,ptlss_mdl,bsmt_offst,csg_top_ok,csg_at_grd,
+ plstc_prot,disinfectd,pump_inst,pump_date,pump_mfg,pump_model,pump_hp,
+ pump_volts,dropp_len,dropp_mat,pump_cpcty,pump_type,variance,drllr_name,
+ entry_date,updt_date,wellid""",
+"c5c2" : """objectid,c5c2_seq_no,relateid,constype,from_depth,to_depth,diameter,
+ slot,length,material,amount,units,wellid""",
+"c5id" : """objectid,c5id_seq_no,relateid,identifier,id_type,id_prog,wellid""",
+"c5ix" : """objectid,relateid,county_c,unique_no,wellname,
+ township,range,range_dir,section,subsection,mgsquad_c,
+ elevation,elev_mc,status_c,use_c,loc_mc,loc_src,data_src,
+ depth_drll,depth_comp,date_drll,case_diam,case_depth,grout,
+ pollut_dst,pollut_dir,pollut_typ,
+ strat_date,strat_upd,strat_src,strat_geol,strat_mc,
+ depth2bdrk,first_bdrk,last_strat,ohtopunit,ohbotunit,aquifer,
+ cuttings,core,bhgeophys,geochem,waterchem,obwell,swl,dh_video,input_src,
+ unused,entry_date,updt_date,geoc_type,gcm_code,geoc_src,geoc_prg,utme,utmn,
+ geoc_entry,geoc_date,geocupd_entry,geocupd_date,rcvd_date,well_label,wellid,
+ swlcount,swldate,swlavgmeas,swlavgelev,bdrkelev,ohtopelev,ohbotelev,botholelev,
+ logurl,straturl""",
+"c5pl" : """objectid,c5pl_seq_no,relateid,pumptestid,test_date,start_meas,
+ flow_rate,duration,pump_meas,wellid""",
+"c5rm" : """objectid,c5rm_seq_no,relateid,seq_no,remarks,wellid""",
+"c5st" : """objectid,c5st_seq_no,relateid,depth_top,depth_bot,drllr_desc,
+ color,hardness,strat,lith_prim,lith_sec,lith_minor,wellid,concat,
+ stratcode_gen,stratcode_detail""",
+"c5wl" : """objectid,c5wl_seq_no,relateid,meas_type,meas_date,meas_time,
+ m_pt_code,meas_point,measuremt,meas_elev,data_src,program,entry_date,updt_date,
+ wellid""",
+}
+
+
 """ 
 Simple type checking, type converting, and text cleaning functions.
 These are used for importing .csv files, and assume that the data in the .csv
 files will conform to the anticipated data types.  No warnings or error messages
 will be generated.
 """
+DEFAULTWELLID = 9000000000
+def safewellid(x):
+    global DEFAULTWELLID
+    try:
+        val = int(x)
+        assert val > 0
+    except Exception as e:
+        val = DEFAULTWELLID + 1
+        print (f"++++ Assigning defualt wellid {val} to {x}.  {e}")
+        DEFAULTWELLID += 1
+    return val
+    
 def safeint(x):
     """
     A simple type check for integer: return x if int else None
@@ -102,6 +163,14 @@ def get_col_names_and_converters(db, table_name, csv_cols):
     The csv DictReader method is case sensitive to the column names as entered
     in the csv file, while the sql queries are not case sensitive to the column 
     names.  Returned column names must match the case in csv_cols.
+    
+    Beginning 2025-09 observe changes in source file structure.
+    Common changes:
+        Columns 1 and 2 are  [objectid, c5xx_seq_no,]  neither of use.
+        Wellid is moved to the final column
+    Special cases:
+        c5ix, c5st: wellid column is not at the end
+        
     """
     data = db.cur.execute(f'PRAGMA TABLE_INFO({table_name})').fetchall() 
     utbl_cols = [c[1].upper() for c in data]
@@ -114,7 +183,9 @@ def get_col_names_and_converters(db, table_name, csv_cols):
             continue
         n = csv_cols[ucsv_cols.index(N)] 
         col_names.append(n)   
-        if   T[:4] == 'INTE':
+        if N == 'WELLID':
+            dcol_func[n] = safewellid
+        elif T[:4] == 'INTE':
             dcol_func[n] = safeint
         elif T == 'REAL':
             dcol_func[n] = safefloat
@@ -166,9 +237,12 @@ def csv_wellid_generator(csvname, col_names, colfunc, MNUcol='RELATEID'):
     -   Sets wellid to Null if the MNUcol cannot be converted to an integer. 
     """
     with open(csvname, 'r') as datafile:
+        defaultid = 777000000
         reader = csv.DictReader(datafile)
         for line in reader:
-            wellid = safeint(line[MNUcol])
+            wellid = safeint(line[MNUcol], default=defaultid)
+            if wellid == defaultid: 
+                defaultid += 1
             yield tuple([wellid]+[colfunc[col](line[col]) for col in col_names])
          
 def shp_locs_generator(shpname):
@@ -205,8 +279,8 @@ class cwi_csvupdate():
         self.cwidatacsvdir = cwidatacsvdir
         self.locsdir = locsdir
         self.data_table_suffixes = 'ix id ad an c1 c2 pl rm st wl'.split()
-        self.data_table_names = [f'c4{x}' for x in self.data_table_suffixes]
-        self.locs_table_name = 'c4locs'
+        self.data_table_names = [f'c5{x}' for x in self.data_table_suffixes]
+        self.locs_table_name = 'c5locs'
 
         assert os.path.exists(self.cwidatacsvdir), f"Missing {self.cwidatacsvdir}"
         assert os.path.exists(self.locsdir), f"Missing {self.locsdir}"
@@ -214,7 +288,7 @@ class cwi_csvupdate():
     def delete_table_data(self, db, 
                           tables=None):    
         """
-        Delete all from the c4* data and locs tables. Preparing to import.
+        Delete all from the c5* data and locs tables. Preparing to import.
         
         Arguments
         ---------
@@ -236,8 +310,8 @@ class cwi_csvupdate():
                               ('unloc_wells.shp', 'unloc')):
                 shpname = os.path.join(self.locsdir, fname)
                 if os.path.exists(shpname):
-                    db.query (f"DELETE FROM c4locs where cwi_loc = '{val}';",)
-                    print (f"DELETE FROM c4locs where cwi_loc = '{val}';")
+                    db.query (f"DELETE FROM c5locs where cwi_loc = '{val}';",)
+                    print (f"DELETE FROM c5locs where cwi_loc = '{val}';")
                 else:
                     print(f'Missing {shpname}, {val} records not refreshed')
         db.commit_db()
@@ -246,7 +320,7 @@ class cwi_csvupdate():
     def import_data_from_csv(self, db, schema_has_constraints, 
                              table_names=None):    
         """ 
-        Create c4 tables in an sqlite db, and read in data from csv files
+        Create c5 tables in an sqlite db, and read in data from csv files
  
         Notes
         ----- 
@@ -254,19 +328,21 @@ class cwi_csvupdate():
             fullset/cwi_CSV.zip
         Assumes that data tables have been created.
         Skips any table that already has at least 1 record in it.
-        Some details and steps will depend on the c4version selected, described
+        Some details and steps will depend on the c5version selected, described
            below.
          
         schema_versions and constraints
         -------------------------------
-        c4.0.# & c4.1.# define the tables exactly as MGS (except c4locs).
-        c4.2.# & up add column wellid to every table.
-        c4.3.# & up may put foreign key and unique constraints on the wellid
+        c5.0.# & c5.1.# define the tables exactly as MGS (except c5locs).
+        c5.2.# & up add column wellid to every table.
+        c5.3.# & up may put foreign key and unique constraints on the wellid
                  column, so the row generator must supply the wellid at the 
                  time that a record is created.
         """
         if table_names is None: 
             table_names = self.data_table_names 
+            
+        #table_names = ['c5ix', 'c5id', 'c5ad', 'c5an', 'c5c1', 'c5c2', 'c5pl', 'c5rm', 'c5st', 'c5wl', ]
         
         existing_tables = db.get_tablenames()
 
@@ -315,27 +391,27 @@ class cwi_csvupdate():
         If locs is supplied as a csv file rather than shapefile(s), then read it
         in like the other data tables.
         """
-        csvname = os.path.join(self.cwidatacsvdir, f'c4locs{CSVEXT}') 
+        csvname = os.path.join(self.cwidatacsvdir, f'c5locs{CSVEXT}') 
         if os.path.exists(csvname):
             self.import_data_from_csv( db, schema_has_constraints, 
-                                       table_names=('c4locs',) )
-            print (f"c4locs table was imported from csv file: {csvname}")
+                                       table_names=('c5locs',) )
+            print (f"c5locs table was imported from csv file: {csvname}")
             return True
         return False
       
     def import_cwi_locs(self, db):
         """
-        Import the shapefiles into table c4locs. 
+        Import the shapefiles into table c5locs. 
         
         There is one shapefile for located wells (wells.shp) and another for
         unlocated wells (unloc_wells.shp). Both are read into a single table,
-        c4locs. Their origin  is distinguished by the value in a newly added
+        c5locs. Their origin  is distinguished by the value in a newly added
         column 'cwi_loc' with values of either 'loc' or 'unloc'.
         
         All columns defined in the shapefiles should have matching named columns
-        in c4locs.
+        in c5locs.
 
-        The shapefiles have many columns that either reproduce data in c4ix
+        The shapefiles have many columns that either reproduce data in c5ix
         or other tables, or summarize multiple values as a single value.
         """
         fnames = ['wells.dbf', 'unloc_wells.dbf']
@@ -365,7 +441,7 @@ class cwi_csvupdate():
         Table locs, if present, already has wellids.
         """
         table_names = list(self.data_table_names)
-        if haslocs: table_names.append('c4locs')
+        if haslocs: table_names.append('c5locs')
         u = """UPDATE {tablename}
                set wellid = cast(RELATEID as integer)
                where wellid is null;""".replace('               ',' ')
@@ -397,26 +473,25 @@ class cwi_csvupdate():
             return False
 
 def refresh_table(table_name):
-    from OWI_sqlite import c4db 
-    C4 = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
+    from OWI_sqlite import c5db 
+    Cz = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
                         C.OWI_DOWNLOAD_WELLSSHP_DIR)
-    with c4db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
+    with c5db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
  
         db.query(f"Delete from {table_name};")
-        C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS,
+        Cz.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS,
                                  table_names= [table_name])
         db.commit_db(msg='Imported data from csv files.')
         
-        C4.import_data_from_csv(table_names = [table_name])
+        # Cz.import_data_from_csv(table_names = [table_name])
     
 def RUN_import_csv(C,              # OWI_version
                    data=True, 
                    locs=True,
                    wellids=True,
-                   resume_MNU_at = 0,
-                   tables=None):
+                   resume_MNU_at = 0):
     """ 
     Demonstrate full import from csv files (and shape files). 
     Creates a new OWI.sqlite.  Does not update an existing OWI.sqlite
@@ -455,7 +530,7 @@ def RUN_import_csv(C,              # OWI_version
         method, but does not recognize when steps have been completed.  For 
         example, reading in csv files twice will just create duplicate records.
     """
-    from OWI_sqlite import c4db 
+    from OWI_sqlite import c5db 
 
     if resume_MNU_at > 0:
         assert data == False, 'option data should be False if resum_MUN_at > 0'
@@ -466,49 +541,49 @@ def RUN_import_csv(C,              # OWI_version
         print('Warning. The CWI data files do not pass UNIQUE constaints')
         #raise NotImplementedError('Data constraints models are not implemented')
 
-    C4 = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
+    Cz = cwi_csvupdate( C.OWI_DOWNLOAD_CWIDATACSV_DIR,
                         C.OWI_DOWNLOAD_WELLSSHP_DIR)
     
     create = not os.path.exists(C.OWI_DOWNLOAD_DB_NAME)
     
     print (f"Importing data to {C.OWI_DOWNLOAD_DB_NAME}")
-    with c4db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
+    with c5db(db_name=C.OWI_DOWNLOAD_DB_NAME, commit=True) as db:
         
         if create: 
             print (f"creating tables, constraints, and views from {C.OWI_DB_SCHEMA}")
-            execute_statements_from_file(db, C.OWI_DB_SCHEMA)
+            execute_statements_from_file(db, C.OWI_DB_SCHEMA, verbose=True)
 
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
             db.query('PRAGMA foreign_keys = False')
  
         if data: 
-            C4.delete_table_data(db, 'data')
-            C4.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS)
+            Cz.delete_table_data(db, 'data')
+            Cz.import_data_from_csv( db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS)
             db.commit_db(msg='Imported data from csv files.')
         
         if locs and C.OWI_SCHEMA_HAS_LOCS: 
-            C4.delete_table_data(db,'locs')
-            if not C4.import_locs_from_csv(db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS):
-                C4.import_cwi_locs(db)
-            db.commit_db(msg='Imported c4locs from files.')
+            Cz.delete_table_data(db,'locs')
+            if not Cz.import_locs_from_csv(db, C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS):
+                Cz.import_cwi_locs(db)
+            db.commit_db(msg='Imported c5locs from files.')
         
         if wellids:
             if C.OWI_SCHEMA_HAS_WELLID:
-                C4.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
-                db.commit_db(msg='Popula/home/bill/R/cwi/OWI40.sqliteted wellid in c4 data tables.')
+                Cz.populate_wellid_and_index(db, C.OWI_SCHEMA_HAS_LOCS)
+                db.commit_db(msg='Popula/home/bill/R/cwi/OWI40.sqliteted wellid in c5 data tables.')
             
             
             if C.OWI_REFORMAT_UNIQUE_NO:
-                """ Removes leading 0's from identifiers in c4ix.UNIQUE_NO and
-                    c4locs.UNIQUE_NO.  This is really optional.
+                """ Removes leading 0's from identifiers in c5ix.UNIQUE_NO and
+                    c5locs.UNIQUE_NO.  This is really optional.
                 """
                 print (f"OWI_REFORMAT_UNIQUE_NO: {C.OWI_REFORMAT_UNIQUE_NO}, data:{data}, locs:{locs}")
                 if data:
-                    db.update_unique_no_from_wellid('c4ix')
-                    db.commit_db(msg='Reformatted unique_no in c4ix')
+                    db.update_unique_no_from_wellid('c5ix')
+                    db.commit_db(msg='Reformatted unique_no in c5ix')
                 if locs and C.OWI_SCHEMA_HAS_LOCS:
-                    db.update_unique_no_from_wellid('c4locs')
-                    db.commit_db(msg='Reformatted unique_no in c4locs')
+                    db.update_unique_no_from_wellid('c5locs')
+                    db.commit_db(msg='Reformatted unique_no in c5locs')
  
         if C.OWI_SCHEMA_IDENTIFIER_MODEL == 'MNU':
             for sqlfiles in C.OWI_MNU_INSERT[resume_MNU_at:]:
@@ -527,7 +602,7 @@ def RUN_import_csv(C,              # OWI_version
                 #       5:  mnu_resolve_faults_o1.1.1.sql
         
         # if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS and C.OWI_SCHEMA_HAS_LOCS:
-        #     C4.append_c5locs_to_c5ix(db)
+        #     Cz.append_c5locs_to_c5ix(db)
         #     db.commit_db()
             
         if C.OWI_SCHEMA_HAS_FKwellid_CONSTRAINTS:
@@ -569,9 +644,9 @@ def RUN_import_swuds(create=False):
     elif 0:
         # Testing
         csvname = r'F:\Bill\Workspaces\Py1\OWIsqlite\demo_data\mpars_demo.csv'
-        db_name = r'F:\Bill\Documents\GW\CWI\c4db.sqlite'
+        db_name = r'F:\Bill\Documents\GW\CWI\c5db.sqlite'
 
-    with c4db(db_name=db_name, commit=True) as db:
+    with c5db(db_name=db_name, commit=True) as db:
         if create:
             execute_statements_from_file(db, S.OWI_SWUDS_SCHEMA)
         import_swuds_full(db, csvname)
@@ -579,10 +654,10 @@ def RUN_import_swuds(create=False):
 
 if __name__ == '__main__':
     print (versioninfo(C))
-    RUN_import_csv(C, tables = None)  # re-imports all tables from csv. 
+    RUN_import_csv(C)  # re-imports all tables from csv. 
     
     # RUN_import_csv(tables = 'data')
-    # refresh_table('c4ix')
+    # refresh_table('c5ix')
     # RUN_import_csv(data=False, 
     #                locs=False,
     #                wellids = False,

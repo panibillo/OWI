@@ -10,10 +10,10 @@ Two service functions are included:
 -   showprogress() : a semi-graphical progress indicator.
 -   qmarks() : generate a string of "?" characters for use in queries.
 
-Class c4db implements only variables and methods that are agnostic as to
+Class c5db implements only variables and methods that are agnostic as to
 the database schema and database engine.  
 
-Class c4db inherits from class DB_SQLite.
+Class c5db inherits from class DB_SQLite.
 DB_SQLite holds SQLite dependent methods, and inherits the context manager 
 mixin class DB_context_manager.
 
@@ -23,9 +23,9 @@ Class DB_context_manager is a mixin class:
     it depends on some methods to be implemented by a class that inherits it. 
 
     Syntax options for the context manager:
-        with c4db(db_name) as db:  
-        with c4db(db_name, commit=True):
-        with c4db(db_name, open_db=False):
+        with c5db(db_name) as db:  
+        with c5db(db_name, commit=True):
+        with c5db(db_name, open_db=False):
     
     Defaults argument values: 
         open_db=True.  Explicitly call db.open_db() to open the connection
@@ -34,16 +34,16 @@ Class DB_context_manager is a mixin class:
 
 Methods
 -------
-    with c4db() as db:     [context manager syntax]
+    with c5db() as db:     [context manager syntax]
 
     showprogress()
-    qmarks() or c4db.qmarks()
-    c4db.query()
-    c4db.queryone()
-    c4db.get_tablenames()
-    c4db.get_viewnames()
-    c4db.get_column_names()
-    c4db.get_column_type_dict()
+    qmarks() or c5db.qmarks()
+    c5db.query()
+    c5db.queryone()
+    c5db.get_tablenames()
+    c5db.get_viewnames()
+    c5db.get_column_names()
+    c5db.get_column_type_dict()
 
 '''
 import csv
@@ -125,6 +125,8 @@ def qmarks(vals):
         return ','.join(vals * ['?'])
     else:
         return ','.join(len(vals) * ['?'])
+
+        
 
 def REGEXP(pattern, target_string):
     """ 
@@ -699,8 +701,58 @@ class DB_SQLite(DB_context_manager):
             for row in self.query(s):
                 w.writerow(row)
         print (f"{table_name} written to {csv_name}")
+        
+    def clone_db_tables_and_views(self, otherdb, tables=True, views=True, data=True):
+    
+        print (f"Cloning {self.db_name} to {otherdb.db_name}")
+        # Clone tables
+        if tables:
+            for table in self.get_tablenames():
+                # Get table creation SQL
+                sql = f"SELECT sql FROM sqlite_master WHERE type='table' AND name=?;"
+                create_sql = self.query(sql, (table,))[0][0] 
+                print (create_sql)
+                create_sql = create_sql.replace('CREATE TABLE',
+                                                'CREATE TABLE IF NOT EXISTS')
+                print (create_sql)
+                otherdb.query(create_sql)  # Create table in destination DB
+    
+        # Clone views
+        if views:
+            for view in self.get_viewnames():
+                # Get view creation SQL
+                sql = f"SELECT sql FROM sqlite_master WHERE type='view' AND name=?;"
+                create_sql = self.query(sql, (view,))[0][0]  
+                create_sql = create_sql.replace('CREATE VIEW',
+                                                'CREATE VIEW IF NOT EXISTS')
+                print (create_sql)
+                otherdb.query(create_sql)  # Create view in destination DB
 
-class c4db(DB_SQLite): 
+    @staticmethod
+    def sqlfmt(text, tablength=4):
+        
+        # find and replace tabs
+        if '\t' in text:
+            text = text.replace('\t',tablength*' ')
+        
+        lines = text.split('\n')
+        # omit the first line if blank
+        while len(lines[0].strip()) == 0:
+            lines.pop(0)
+        
+        # Count the minimum number of leading spaces in the remaining lines
+        # Then reassemble the text omitting those leading spaces
+        # But treat the first line as special if it has 0 leading spaces.
+        n = len(lines[0]) - len(lines[0].lstrip())
+        if n == 0:
+            n = min([len(a)-len(a.lstrip()) for a in lines[1:]])
+            rv = '\n'.join([lines[0]] + [a[n:] for a in lines[1:]])
+        else:
+            n = min([len(a)-len(a.lstrip()) for a in lines])
+            rv = '\n'.join([a[n:] for a in lines])
+        return rv    
+
+class c5db(DB_SQLite): 
     def __init__(self, db_name=None, 
                        open_db=False, 
                        commit=False):
@@ -711,12 +763,12 @@ class c4db(DB_SQLite):
 #         self.datatables = [f"{OWI_DATA_TABLE_PREFIX}{t}" for t in datatables]
 
     def __str__(self):
-        rv=(f"c4db() a SQLite implementation of County Well Index",
+        rv=(f"c5db() a SQLite implementation of County Well Index",
             super().__str__() )
         return '\n'.join(rv)
 
     def __repr__(self):
-        rv = (f"c4db(db_name='{self.db_name}'," 
+        rv = (f"c5db(db_name='{self.db_name}'," 
               f" open_db={self.connection_open}," 
               f" commit={self._context_autocommit})")
         return rv
@@ -727,16 +779,16 @@ class c4db(DB_SQLite):
         
         Arguments
         ---------
-        tablename: string.  value is either 'c4ix' or 'c4locs'
+        tablename: string.  value is either 'c5ix' or 'c5locs'
             
         Notes
         -----
         This routine does not issue a COMMIT
         
         Assumes that the wellid is equivalent to the Unique_no. That assumption
-        should be true for versions of cwi through c4 and c5 at least.
+        should be true for versions of cwi through c5 at least.
         """
-        assert tablename in ('c4ix c4locs')
+        assert tablename in ('c5ix c5locs')
         u = f"update {tablename} set UNIQUE_NO = cast(wellid as text);"     
         try:
             self.query(u)
@@ -819,13 +871,13 @@ if __name__=='__main__':
         print ('Test of __str__() and __repr__()')
         COMMIT = False
         DB_NAME = ":memory:"
-        print("\nDemonstrate opening c4db using a context manager")
-        with c4db(db_name=DB_NAME, commit=COMMIT) as db:
+        print("\nDemonstrate opening c5db using a context manager")
+        with c5db(db_name=DB_NAME, commit=COMMIT) as db:
             print (repr(db))
             print (db)
     
-        print("\nDemonstrate opening and closing c4db without a context manager")
-        db = c4db(db_name=DB_NAME, open_db=False,  commit=True)
+        print("\nDemonstrate opening and closing c5db without a context manager")
+        db = c5db(db_name=DB_NAME, open_db=False,  commit=True)
         print (repr(db))
         print (db)
         db.close_db()
@@ -856,7 +908,7 @@ if __name__=='__main__':
         # cur.execute("select trig_enabled()" )
         # print ('OFF?', cur.fetchone()[0])
 
-        with c4db(db_name=DB_NAME, commit=True, open_db=True) as db:
+        with c5db(db_name=DB_NAME, commit=True, open_db=True) as db:
             print (type(db.con), db.con)
             #print (type(db.cur))
             print (db.connection_open)

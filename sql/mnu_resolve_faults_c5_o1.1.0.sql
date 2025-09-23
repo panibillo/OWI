@@ -33,7 +33,7 @@ select     mnu, smnu, id_type, id_prog, mmid, mexplain, mplan, mresolved, mremar
 
 */
 
--- C4ID_KNOWN_XREFS
+-- C5ID_KNOWN_XREFS
 -- Records where the well is given 2 wellids in c5ix, and they are cross-referenced
 -- in c5id by linking each identifier with the other wellid
 -- Identified in c5id_match with wellid1 and wellid2.  Where wellid1 < wellid2.
@@ -52,7 +52,7 @@ LEFT JOIN c5id c
   ON o.wellid2 = c.wellid 
 LEFT JOIN c5id c2
   ON o.wellid1 = c2.wellid
-WHERE c.mexplain = 'C4ID_KNOWN_XREFS'
+WHERE c.mexplain = 'C5ID_KNOWN_XREFS'
   AND c.ID_PROG = 'MNUNIQ'
   AND c2.ID_PROG = 'MNUNIQ' ;
 
@@ -68,12 +68,12 @@ LEFT JOIN c5id c
   ON o.wellid2 = c.wellid 
 LEFT JOIN c5id c2
   ON o.wellid1 = c2.wellid
-WHERE c.mexplain = 'C4ID_KNOWN_XREFS'
+WHERE c.mexplain = 'C5ID_KNOWN_XREFS'
   AND c.mmid=11
   AND c2.mmid=11;
 
 -- 12
--- C4ID_UNRESOLVED_MERGES: merge to serve as examples.
+-- C5ID_UNRESOLVED_MERGES: merge to serve as examples.
 INSERT INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mremark)
 SELECT o.wellid1, c2.RELATEID, c2.IDENTIFIER, c2.ID_TYPE, c2.ID_PROG,
@@ -86,17 +86,17 @@ WHERE o.mmid = 12
   ;
 
 -- 13
--- C4ID_UNRESOLVED_MERGES_WMWSR : presumed to be errors. IDENTIFIERs missing 'H'.
+-- C5ID_UNRESOLVED_MERGES_WMWSR : presumed to be errors. IDENTIFIERs missing 'H'.
 UPDATE c5id set mplan = 'Do not use. IDENTIFIER probably missing H'
 where mmid = 13;
 
 -- 14
--- C4ID_UNRESOLVED_MERGES_WSERIES : presumed to be errors. Cannot resolve using MWI.
+-- C5ID_UNRESOLVED_MERGES_WSERIES : presumed to be errors. Cannot resolve using MWI.
 UPDATE c5id set mplan = 'Do not use. IDENTIFIER prossibly mixed up'
 where mmid = 14;
 
 -- 15 
--- C4ID_BAD_LINKS_OR_REDUNDANT_WELLS : Leave unmerged as examples.
+-- C5ID_BAD_LINKS_OR_REDUNDANT_WELLS : Leave unmerged as examples.
 INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mplan, mremark)
 SELECT wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
@@ -106,7 +106,7 @@ WHERE mmid = 15
 ;
 
 -- 16
--- C4ID_1WELL_ASSIGNED_2HNUMBERS : Leave unmerged as examples.
+-- C5ID_1WELL_ASSIGNED_2HNUMBERS : Leave unmerged as examples.
 INSERT OR IGNORE INTO o1id(wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
   MNU, sMNU, mmid, mexplain, mplan, mremark)
 SELECT wellid, RELATEID, IDENTIFIER, ID_TYPE, ID_PROG,
@@ -178,7 +178,7 @@ SELECT CAST('8000' || substr(IDENTIFIER,2,6) AS INTEGER)  as wellid,
        'WMWSR' as ID_PROG,
        3 as MNU, 1 as sMNU, 
        17 as mmid, 
-       'C4ID_H_IS_MULTY_OR_BAD_REF' as mexplain, 
+       'C5ID_H_IS_MULTY_OR_BAD_REF' as mexplain, 
        'OWI synthetic wellid and RELATEID' as mplan,
        'unverified' as mremark
 FROM c5id
