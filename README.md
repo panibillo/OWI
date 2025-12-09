@@ -40,6 +40,10 @@ Python libraries used include:
 * ftplib
 * zipfile
 
+The following modules need to be installed in your environment(via pip)
+* pyshp
+* pandas 
+
 This project is tested on Windows 10 and Ubuntu 20.04
 
 ### Installing
