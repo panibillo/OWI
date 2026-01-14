@@ -19,17 +19,76 @@ Version
     2021-10-14
 """
 import os
+import argparse
+import logging
+
 from OWI_download_ftp import RUN_download_cwi
 from OWI_import_csv import RUN_import_csv, RUN_import_swuds
 
 from OWI_config import  OWI_version as C
-if os.path.exists(C.OWI_DOWNLOAD_DB_NAME):
-    raise NotImplementedError (f"WARNING: the file should not exist before running:\n{C.OWI_DOWNLOAD_DB_NAME}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Create a fresh local copy of cwi from scratch"
+    )
+    parser.add_argument(
+        "--log",
+        type=str,
+        default="INFO",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+    parser.add_argument(
+        "--skip-download",
+        action="store_true",
+        default=False,
+        help="Skip the download step",
+    )
+    parser.add_argument(
+        "--skip-import-csv",
+        action="store_true",
+        default=False,
+        help="Skip the import csv step",
+    )
+    parser.add_argument(
+        "--skip-import-swuds",
+        action="store_true",
+        default=False,
+        help="Skip the import swuds step",
+    )
+    parser.add_argument(
+        "--overwrite-existing-db",
+        action="store_true",
+        default=False,
+        help="Overwrite existing database if it exists",
+    )
+    args = parser.parse_args()
+
+    logging.basicConfig(level=getattr(logging, args.log.upper(), None))
+
+    logging.debug(f"Starting Run_new with args: {args}")
+
+    if os.path.exists(C.OWI_DOWNLOAD_DB_NAME):
+        if args.overwrite_existing_db:
+            logging.info (f"Overwriting existing database file:\n{C.OWI_DOWNLOAD_DB_NAME}")
+            os.remove(C.OWI_DOWNLOAD_DB_NAME)
+        else:
+            logging.fatal(f"the file should not exist before running:\n{C.OWI_DOWNLOAD_DB_NAME}")
+            exit(1)
     
+    try:
 
-if 0: RUN_download_cwi()
-RUN_import_csv()
+        if not args.skip_download:
+            RUN_download_cwi(C)
+        
+        if not args.skip_import_csv:
+            RUN_import_csv(C)
 
-if 0: RUN_import_swuds()
+        if not args.skip_import_swuds:
+            RUN_import_swuds()
+    
+        print ("/////////// DONE with Run_new.py ////////////")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        logging.fatal(e)
 
-print ("/////////// DONE with Run_new.py ////////////")
