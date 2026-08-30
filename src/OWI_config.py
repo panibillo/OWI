@@ -51,7 +51,7 @@ class OWIfiles:
         
     elif platform.system() == 'Linux':
         OWI_DOWNLOAD_DIR = f"{os.path.expanduser('~')}/R/cwi"
-        OWI_DIR = f"{os.path.expanduser('~')}/Documents/data/MN/OWI"
+        OWI_DIR = f"{os.path.expanduser('~')}/data/MN/OWI"
 
     # OWI_DOWNLOAD_CWIDATACSV_EXT = ".csv"
     OWI_DOWNLOAD_CWIDATACSV_EXT = ".txt"
