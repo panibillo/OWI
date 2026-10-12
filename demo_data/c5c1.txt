@@ -1,0 +1,12 @@
+objectid,relateid,drill_meth,drill_flud,hydrofrac,hffrom,hfto,case_mat,case_joint,case_top,drive_shoe,case_type,screen,ohtopfeet,ohbotfeet,screen_mfg,screen_typ,ptlss_mfg,ptlss_mdl,bsmt_offst,csg_top_ok,csg_at_grd,plstc_prot,disinfectd,pump_inst,pump_date,pump_mfg,pump_model,pump_hp,pump_volts,dropp_len,dropp_mat,pump_cpcty,pump_type,variance,drllr_name,entry_date,updt_date,wellid
+2,0000682369,N,Q,,,,P,U,,,C,Y,,,JOHNSON           ,L,,,,U,,,Y,,20020918,AERMOTOR              ,,0.500000000000000,230,45.000000000000000,,12.000000000000000,S,N,"FOBBE, B.    ",20030102,,682369
+31,0000639884,N,B,,,,P,,,,C,Y,,,JOHNSON           ,L,,,,Y,,,Y,N,,,,,,,,,,N,"KERSTING, R. ",20000420,20000519,639884
+34,0000613619,N,B,N,,,P,,,,C,Y,,,JOHNSON           ,L,MONITOR     ,SNAPPY    ,,U,,,Y,,,STA-RITE              ,,0.500000000000000,230,40.000000000000000,,10.000000000000000,S,N,LLOYD        ,20000420,20000606,613619
+47,0000640559,T,,,,,M,W,,Y,S,,,,,,,,,U,,,,,,,,,,,,,,,"STANGRET, J. ",20000418,20020206,640559
+58,0000403349,N,,,,,P,,,,C,Y,,,JOHNSON           ,O,MONITOR     ,,,,,,Y,N,,,,,,,,,,,"MARCUS, R.   ",,20021021,403349
+563410,0000877127,N,B,N,,,P,W,,N,C,Y,,,JOHNSON           ,L,BAKER       ,4X5 MON   ,,,,,Y,,20220627,GRUNDFOS              ,15SQE07-220  ,0.750000000000000,230,40.000000000000000,,15.000000000000000,S,N,"HUEGGE, JERRY",,,877127
+563415,0000855473,D,,,,,S,,,,C,,,,,,,,,,,,N,,20230600,,,,,,,,J,N,"SWINDALL, C. ",,,855473
+563441,0000879290,N,Q,N,,,P,,,N,C,Y,,,ALLOY SCREEN WORKS,2,MONITOR     ,4X1BULLDOG,,Y,,,Y,,20230804,STA-RITE              ,,75.000000000000000,230,70.000000000000000,,15.000000000000000,S,N,"EWERT, CHAD  ",,,879290
+563460,0000860572,N,B,,,,P,,,,C,Y,,,JOHNSON           ,L,BAKER       ,BULLDOG   ,,Y,,,Y,,20220705,GOULDS                ,,0.750000000000000,230,40.000000000000000,P,10.000000000000000,S,N,"MOTZKO, J    ",20230711,,860572
+563461,0000858113,N,B,N,,,P,,,N,C,Y,,,JET STREAM        ,P,,,,,,,,N,,,,,,,,,,N,"GRAHAM, K    ",20230711,,858113
+563466,0000851037,N,O,N,,,P,G,,N,C,Y,,,MOMFLEX           ,P,AQUASEAL    ,T4-1      ,,Y,,,Y,,20201231,GOULDS                ,18C510       ,1.000000000000000,230,40.000000000000000,P,18.000000000000000,S,N,"THOMPSON, S  ",20230711,,851037

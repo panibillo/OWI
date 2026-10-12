@@ -1,0 +1,8 @@
+requests
+beautifulsoup4
+pyshp
+keyring
+distro
+openpyxl
+# Optional, not installable with pip: QGIS Python bindings (qgis.core),
+# used only by src/gpkg_tools.py. Get them from the OS packages or the QGIS installer.
