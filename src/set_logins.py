@@ -25,7 +25,7 @@ def set_ftp_logins():
 def get_ftp_logins():
     data = keyring.get_password('OWI_ftp', 'bill')
     if 0: # for trouble shooting only. Do not normally display.
-        print(f"CWI login saved in keyring = '{data}'"
+        print(f"CWI login saved in keyring = '{data}'")
     ftppath, username, password = data.split('|')
     return OWI_FTP_ADDRESS, ftppath, username, password
 
