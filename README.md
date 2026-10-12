@@ -47,10 +47,6 @@ Optional: `src/gpkg_tools.py` uses the QGIS Python bindings (`qgis.core`). QGIS 
 needed for anything else. It cannot be installed with pip; it comes from the OS
 packages or the QGIS installer. See Setup B under Installing.
 
-The following modules need to be installed in your environment(via pip)
-* pyshp
-* pandas 
-
 This project is tested on Windows 10 and Ubuntu 20.04
 
 ### Installing

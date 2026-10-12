@@ -93,7 +93,8 @@ def download_cwi_from_ftp( ftpaddr,
     File dates are compared, and the ftp download only progresses if the
     ftp version is newer.  
     
-    The ftp login should be defined in OWI_logins.py
+    The ftp login is found by RUN_download_cwi in the keyring,
+    in environment variables, or by asking the user.
     The download targets are defined in OWI_config.py
     
     Notes on variable names:
@@ -209,21 +210,13 @@ class ftp_params:
     user = None
     passwd = None
 
-    def get_from_module(self):
+    def get_from_keyring(self):
+        # Credentials are stored in the keyring by set_logins.py
         try:
-            import OWI_logins as L
-        except:
-            raise ImportError("OWI_logins module not found.")
-        if not hasattr(L, 'OWI_FTP_ADDRESS') and self.addr is not None \
-            and not hasattr(L, 'OWI_FTP_PATH') and self.path is not None \
-            and not hasattr(L, 'OWI_FTP_USERNAME') and self.user is not None \
-            and not hasattr(L, 'OWI_FTP_PASSWORD') and self.passwd is not None:
-            self.addr = L.OWI_FTP_ADDRESS
-            self.path = L.OWI_FTP_PATH
-            self.user = L.OWI_FTP_USERNAME
-            self.passwd = L.OWI_FTP_PASSWORD
-        else:
-            raise ValueError("FTP parameters not found in OWI_logins and not provided.")
+            from set_logins import get_ftp_logins
+            self.addr, self.path, self.user, self.passwd = get_ftp_logins()
+        except Exception as e:
+            raise ValueError(f"FTP parameters not found in keyring ({type(e).__name__}).")
         return
 
     def get_from_environment(self, prefix='OWI_FTP_'):
@@ -242,14 +235,29 @@ class ftp_params:
             raise ValueError("FTP parameters not fully set from environment variables.")
         return
 
+    def get_from_user(self):
+        import getpass
+        self.addr = input("Enter the FTP address: ")
+        self.path = input(f"Enter the FTP path:  {self.addr}/")
+        self.user = input("Enter your FTP username: ")
+        self.passwd = getpass.getpass(prompt=f'Enter password for ftp user "{self.user}": ')
+        return
+
 def RUN_download_cwi(C):
+    # Look for the FTP parameters in the keyring,
+    # then in environment variables,
+    # and finally ask the user.
     params = ftp_params()
     try:
-        params.get_from_module()
-    except:
-        logging.warning("Could not get FTP parameters from OWI_logins module. Trying environment variables.")
-        params.get_from_environment()
-    
+        params.get_from_keyring()
+    except ValueError:
+        logging.warning("Could not get FTP parameters from keyring. Trying environment variables.")
+        try:
+            params.get_from_environment()
+        except ValueError:
+            logging.warning("Could not get FTP parameters from environment variables. Asking user.")
+            params.get_from_user()
+
     logging.debug("RUN_download_cwi()")
     logging.debug(versioninfo(C))
     
