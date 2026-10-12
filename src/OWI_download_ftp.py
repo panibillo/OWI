@@ -105,6 +105,10 @@ def download_cwi_from_ftp( ftpaddr,
     rv = []
     ftpstart = time.time()
     with FTP(ftpaddr) as ftp:
+        if ftppass == '<ask>':
+            import getpass
+            ftppass = getpass.getpass(prompt=f'Enter password for ftp user "{ftpuser}": ')
+            
         ftp.login(user=ftpuser, passwd=ftppass)
         log.debug(msg='ftp Log-in successful')
         
@@ -199,25 +203,66 @@ def download_cwi_from_ftp( ftpaddr,
                            
     return rv
 
+class ftp_params:
+    addr = None
+    path = None
+    user = None
+    passwd = None
+
+    def get_from_module(self):
+        try:
+            import OWI_logins as L
+        except:
+            raise ImportError("OWI_logins module not found.")
+        if not hasattr(L, 'OWI_FTP_ADDRESS') and self.addr is not None \
+            and not hasattr(L, 'OWI_FTP_PATH') and self.path is not None \
+            and not hasattr(L, 'OWI_FTP_USERNAME') and self.user is not None \
+            and not hasattr(L, 'OWI_FTP_PASSWORD') and self.passwd is not None:
+            self.addr = L.OWI_FTP_ADDRESS
+            self.path = L.OWI_FTP_PATH
+            self.user = L.OWI_FTP_USERNAME
+            self.passwd = L.OWI_FTP_PASSWORD
+        else:
+            raise ValueError("FTP parameters not found in OWI_logins and not provided.")
+        return
+
+    def get_from_environment(self, prefix='OWI_FTP_'):
+        import os
+        self.addr = os.getenv(prefix + 'ADDRESS', self.addr)
+        self.path = os.getenv(prefix + 'PATH', self.path)
+        self.user = os.getenv(prefix + 'USERNAME', self.user)
+        self.passwd = os.getenv(prefix + 'PASSWORD', self.passwd)
+
+        if None in (self.addr, self.path, self.user, self.passwd):
+            # reset to None if any are missing
+            self.addr = None
+            self.path = None
+            self.user = None
+            self.passwd = None
+            raise ValueError("FTP parameters not fully set from environment variables.")
+        return
 
 def RUN_download_cwi(C):
-    import OWI_logins as L
+    params = ftp_params()
+    try:
+        params.get_from_module()
+    except:
+        logging.warning("Could not get FTP parameters from OWI_logins module. Trying environment variables.")
+        params.get_from_environment()
     
-    print ("RUN_download_cwi()")
-    print (versioninfo(C))
+    logging.debug("RUN_download_cwi()")
+    logging.debug(versioninfo(C))
     
-    # print (f"OWI_DOWNLOAD_DIR = {C.OWI_DOWNLOAD_DIR}")
-    # print (f"OWI_DOWNLOAD_WELLSSHP_DIR = {C.OWI_DOWNLOAD_WELLSSHP_DIR}")
-    # print (f"OWI_DOWNLOAD_FILES = {C.OWI_DOWNLOAD_FILES}")
-    return
-    
+    logging.debug(f"OWI_DOWNLOAD_DIR = {C.OWI_DOWNLOAD_DIR}")
+    logging.debug(f"OWI_DOWNLOAD_WELLSSHP_DIR = {C.OWI_DOWNLOAD_WELLSSHP_DIR}")
+    logging.debug(f"OWI_DOWNLOAD_FILES = {C.OWI_DOWNLOAD_FILES}")
            
     # ftpaddr, ftppath, ftpuser, ftppass = L.get_ftp_logins('CWI_ftp', None)
     newfiles = download_cwi_from_ftp(
-        ftpaddr = L.OWI_FTP_ADDRESS,
-        ftppath = L.OWI_FTP_PATH,
-        ftpuser = L.OWI_FTP_USERNAME, 
-        ftppass = L.OWI_FTP_PASSWORD,
+        ftpaddr = params.addr,
+        ftppath = params.path,
+        ftpuser = params.user, 
+        ftppass = params.passwd,
         downloadpath = C.OWI_DOWNLOAD_DIR,
         downloadshppath = C.OWI_DOWNLOAD_WELLSSHP_DIR,
         downloadfiles = C.OWI_DOWNLOAD_FILES) 

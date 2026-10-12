@@ -1,0 +1,38 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "env": {
+                "OWI_FTP_ADDRESS": "the.cwi.data.host.addr",
+                "OWI_FTP_PATH": "/path/to/full/cwi/",
+                "OWI_FTP_USERNAME": "the_user_login_on_the_host",
+                "OWI_FTP_PASSWORD": "<ask>"
+            }
+        },
+        {
+            "name": "Run_new",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "Run_new.py",
+            "cwd": "${workspaceFolder}/src",
+            "args": [
+                "--log", "DEBUG",
+                "--overwrite-existing-db",
+                "--skip-download",
+                "--skip-import-swuds",
+            ],
+            "console": "integratedTerminal",
+            "env": {
+                "OWI_FTP_ADDRESS": "the.cwi.data.host.addr",
+                "OWI_FTP_PATH": "/path/to/full/cwi/",
+                "OWI_FTP_USERNAME": "the_user_login_on_the_host",
+                "OWI_FTP_PASSWORD": "<ask>"
+            }
+        }
+    ]
+}

@@ -53,8 +53,8 @@ class OWIfiles:
         OWI_DOWNLOAD_DIR = f"{os.path.expanduser('~')}/R/cwi"
         OWI_DIR = f"{os.path.expanduser('~')}/data/MN/OWI"
 
-    # OWI_DOWNLOAD_CWIDATACSV_EXT = ".csv"
-    OWI_DOWNLOAD_CWIDATACSV_EXT = ".txt"
+    OWI_DOWNLOAD_CWIDATACSV_EXT = ".csv"
+    # OWI_DOWNLOAD_CWIDATACSV_EXT = ".txt"
     OWI_DOWNLOAD_CWIDATACSV_DIR = f"{OWI_DOWNLOAD_DIR}/{os.path.splitext(CWI_DATA_CSV)[0]}"
     OWI_DOWNLOAD_WELLSSHP_DIR = f"{OWI_DOWNLOAD_DIR}/wellsshp"
     OWI_DOWNLOAD_LOGFILE = f"{OWI_DIR}/OWI_download.log"
