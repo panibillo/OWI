@@ -23,13 +23,18 @@ from OWI_download_ftp import RUN_download_cwi
 from OWI_import_csv import RUN_import_csv, RUN_import_swuds
 
 from OWI_config import  OWI_version as C
-if os.path.exists(C.OWI_DOWNLOAD_DB_NAME):
-    raise NotImplementedError (f"WARNING: the file should not exist before running:\n{C.OWI_DOWNLOAD_DB_NAME}")
-    
+from OWI_config import versioninfo
 
-if 0: RUN_download_cwi()
-RUN_import_csv()
+if __name__ == '__main__':
+    if os.path.exists(C.OWI_DOWNLOAD_DB_NAME):
+        raise NotImplementedError (f"WARNING: the file should not exist before running:\n{C.OWI_DOWNLOAD_DB_NAME}")
 
-if 0: RUN_import_swuds()
+    if 1:
+        print(versioninfo(C))
 
-print ("/////////// DONE with Run_new.py ////////////")
+    if 0: RUN_download_cwi(C)
+    RUN_import_csv(C)
+
+    if 0: RUN_import_swuds()
+
+    print ("/////////// DONE with Run_new.py ////////////")

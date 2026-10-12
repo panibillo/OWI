@@ -21,7 +21,7 @@ import time
 import datetime
 from ftplib import FTP
 import zipfile
-import pandas as pd
+import csv
 
 import logging
 
@@ -37,21 +37,31 @@ def xlsx_to_csv(xlsx_file, csv_file=None):
         csv_file (str, optional): Path to save the .csv file. Defaults to the same name as the .xlsx file in the same directory.
 
     Returns:
-        str: Path to the saved .csv file.
+        bool: True on success.
+
+    Requires openpyxl (imported here so the module loads without it).
     """
-    
+
     # print (f"Found xlsx files rather than csv.\n > Converting: {xlsx_file}\n > To: {csv_file}")
     # Check if the .xlsx file exists
     if not os.path.exists(xlsx_file):
         raise FileNotFoundError(f"The file '{xlsx_file}' does not exist.")
+    if csv_file is None:
+        csv_file = os.path.splitext(xlsx_file)[0] + '.csv'
 
     # Read the Excel file and save it as CSV
     try:
-        # Read the first sheet of the Excel file
-        data = pd.read_excel(xlsx_file, sheet_name=0)
-        
-        # Save the data to a CSV file
-        data.to_csv(csv_file, index=False)
+        from openpyxl import load_workbook
+
+        # Read the first sheet of the Excel file, row by row, into the CSV file
+        wb = load_workbook(xlsx_file, read_only=True, data_only=True)
+        try:
+            with open(csv_file, 'w', newline='') as f:
+                w = csv.writer(f)
+                for row in wb.worksheets[0].iter_rows(values_only=True):
+                    w.writerow(['' if v is None else v for v in row])
+        finally:
+            wb.close()
         assert os.path.exists(csv_file)
         #print(f" Converted '{xlsx_file}' to '{csv_file}'.")
     except Exception as e:

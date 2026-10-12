@@ -12,3 +12,5 @@ scratch/**
 bak/**
 .project
 .pydevproject
+.venv*/
+.settings/

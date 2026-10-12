@@ -32,13 +32,20 @@ The user is responsible for obtaining the instructions and credentials for downl
 
 ### Dependencies
 
-* Python >= 3.7 
+* Python >= 3.12
 
-Python libraries used include:
-* pysqlite
-* shapefile (pyshape is used for reading shape files)
-* ftplib
-* zipfile
+Standard library modules used include sqlite3, ftplib, zipfile and csv.
+
+Third-party libraries (listed in `requirements.txt`):
+* pyshp (imported as `shapefile`, for reading shape files)
+* requests and beautifulsoup4 (scraping the CWI code tables)
+* keyring (storing logins)
+* distro
+* openpyxl (only for converting .xlsx files to .csv)
+
+Optional: `src/gpkg_tools.py` uses the QGIS Python bindings (`qgis.core`). QGIS is not
+needed for anything else. It cannot be installed with pip; it comes from the OS
+packages or the QGIS installer.
 
 This project is tested on Windows 10 and Ubuntu 20.04
 
@@ -47,6 +54,21 @@ This project is tested on Windows 10 and Ubuntu 20.04
 * Download the project files from GitHub.  Open a git Bash window and navigate to the parent folder where you want to install it. Then on the Bash line enter:
 
 	git clone https://github.com/panibillo/OWI.git 
+
+* Create a virtual environment in the project folder and install the libraries. The folder `.venv` is ignored by git.
+
+	Linux:
+
+		python3.12 -m venv .venv
+		.venv/bin/pip install -r requirements.txt
+
+	Windows:
+
+		py -3.12 -m venv .venv
+		.venv\Scripts\pip install -r requirements.txt
+
+  Install the libraries only into the virtual environment. Never use `sudo pip` or `--break-system-packages`.
+  To use `src/gpkg_tools.py`, run it with a Python that can import `qgis.core`, for example a venv created with `--system-site-packages` inside a container that has QGIS installed.
 
 * You are reponsible for getting instructions and credentials for downloading the data files from the ftp site. The needed information is described in file `OWI_logins__template.py`.  Make a copy of that file named `OWI_logins.py` and enter the information using normal Python syntax.  Do not share that file, and do not add to this repository.
 
