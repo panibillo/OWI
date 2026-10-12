@@ -36,9 +36,10 @@ from OWI_config import versioninfo
 # They are the defaults of the command line options.
 # Edit them here to run without command line options, e.g. from Eclipse.
 OPT_LOG = "INFO"
-OPT_SKIP_DOWNLOAD = False
+OPT_DRY_RUN = False
+OPT_SKIP_DOWNLOAD = True
 OPT_SKIP_IMPORT_CSV = False
-OPT_SKIP_IMPORT_SWUDS = False
+OPT_SKIP_IMPORT_SWUDS = True
 OPT_OVERWRITE_EXISTING_DB = False
 
 if __name__ == "__main__":
@@ -50,6 +51,12 @@ if __name__ == "__main__":
         type=str,
         default=OPT_LOG,
         help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=OPT_DRY_RUN,
+        help="Display run configuration",
     )
     parser.add_argument(
         "--skip-download",
@@ -80,6 +87,10 @@ if __name__ == "__main__":
     logging.basicConfig(level=getattr(logging, args.log.upper(), None))
 
     logging.debug(f"Starting Run_new with args: {args}")
+
+    print(versioninfo(C)) 
+    if args.dry_run:
+        exit()
 
     if os.path.exists(C.OWI_DOWNLOAD_DB_NAME):
         if args.overwrite_existing_db:

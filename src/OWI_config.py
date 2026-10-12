@@ -37,6 +37,7 @@ class OWIfiles:
     -   cwi_info_csv.zip is conceived, but not yet produced by MGS.
     """
     CWI_DATA_CSV = "cwidata_CSV.zip"   #9/15/2025 formerly cwidata_csv.zip, then cwi_CSV.zip
+    CWI_DATA_CSV_DIR = "cwidata_csv"   # folder inside CWI_DATA_CSV; unzip creates it. Lower case, unlike the zip name.
     CWI_LOCS = "cwilocs.zip"
     CWI_UNLOCS = "xcwiunlocs.zip"
     CWI_INFO = "cwi_info_csv.zip"
@@ -55,7 +56,7 @@ class OWIfiles:
 
     OWI_DOWNLOAD_CWIDATACSV_EXT = ".csv"
     # OWI_DOWNLOAD_CWIDATACSV_EXT = ".txt"
-    OWI_DOWNLOAD_CWIDATACSV_DIR = f"{OWI_DOWNLOAD_DIR}/{os.path.splitext(CWI_DATA_CSV)[0]}"
+    OWI_DOWNLOAD_CWIDATACSV_DIR = f"{OWI_DOWNLOAD_DIR}/{CWI_DATA_CSV_DIR}"
     OWI_DOWNLOAD_WELLSSHP_DIR = f"{OWI_DOWNLOAD_DIR}/wellsshp"
     OWI_DOWNLOAD_LOGFILE = f"{OWI_DIR}/OWI_download.log"
     OWI_CODETABLES_JSON = os.path.join(OWI_DOWNLOAD_CWIDATACSV_DIR, 
