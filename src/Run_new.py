@@ -22,7 +22,11 @@ import os
 from OWI_download_ftp import RUN_download_cwi
 from OWI_import_csv import RUN_import_csv, RUN_import_swuds
 
+# Import the OWI version selected in OWI_config.py
 from OWI_config import  OWI_version as C
+# Alternatively import a specific version by name, e.g.:
+# from OWI_config import  OWI_version_42 as C
+
 from OWI_config import versioninfo
 
 if __name__ == '__main__':

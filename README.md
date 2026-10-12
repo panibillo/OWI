@@ -45,7 +45,7 @@ Third-party libraries (listed in `requirements.txt`):
 
 Optional: `src/gpkg_tools.py` uses the QGIS Python bindings (`qgis.core`). QGIS is not
 needed for anything else. It cannot be installed with pip; it comes from the OS
-packages or the QGIS installer.
+packages or the QGIS installer. See Setup B under Installing.
 
 This project is tested on Windows 10 and Ubuntu 20.04
 
@@ -55,7 +55,12 @@ This project is tested on Windows 10 and Ubuntu 20.04
 
 	git clone https://github.com/panibillo/OWI.git 
 
-* Create a virtual environment in the project folder and install the libraries. The folder `.venv` is ignored by git.
+* Create a virtual environment in the project folder and install the libraries.
+  Choose one of the two setups below.
+  Folders named `.venv*` are ignored by git.
+  Install the libraries only into the virtual environment. Never use `sudo pip` or `--break-system-packages`.
+
+**Setup A: without QGIS.** Use this if you do **not** intend to import the `qgis` library (for example, to run `src/gpkg_tools.py`).
 
 	Linux:
 
@@ -67,8 +72,22 @@ This project is tested on Windows 10 and Ubuntu 20.04
 		py -3.12 -m venv .venv
 		.venv\Scripts\pip install -r requirements.txt
 
-  Install the libraries only into the virtual environment. Never use `sudo pip` or `--break-system-packages`.
-  To use `src/gpkg_tools.py`, run it with a Python that can import `qgis.core`, for example a venv created with `--system-site-packages` inside a container that has QGIS installed.
+**Setup B: with QGIS, in a distrobox (Linux).** Use this if you intend to import the `qgis` library.
+  The QGIS Python bindings cannot be installed with pip.
+  They must come from the system packages, so QGIS is installed inside a distrobox container, and the venv is allowed to see the container's system packages.
+  The author's container is named `dbx-qgis`. It runs Ubuntu 24.04, with QGIS LTR installed from the QGIS repository `https://qgis.org/ubuntu-ltr`.
+  See https://qgis.org/resources/installation-guide/ for the steps to add that repository.
+
+		distrobox create --name dbx-qgis --image ubuntu:24.04
+		distrobox enter dbx-qgis
+		# inside the container: add the QGIS repository, then
+		sudo apt install qgis python3-qgis python3-venv
+		python3 -m venv --system-site-packages --prompt="owi@dbx" .venv-dbx
+		.venv-dbx/bin/pip install -r requirements.txt
+		.venv-dbx/bin/python3 -c "import qgis.core"   # should print nothing
+
+  Run OWI scripts inside the container with `.venv-dbx/bin/python3`.
+  From outside the container, prefix the command with `distrobox enter dbx-qgis --`.
 
 * You are reponsible for getting instructions and credentials for downloading the data files from the ftp site. The needed information is described in file `OWI_logins__template.py`.  Make a copy of that file named `OWI_logins.py` and enter the information using normal Python syntax.  Do not share that file, and do not add to this repository.
 
