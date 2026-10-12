@@ -95,7 +95,7 @@ Notes on the MNU Identifier Model, defined beginning with version c5.4.0.
 
 	Development and explanation of the MNU identifier model is documented in MNUmodel.ltx, which compiles with LaTeX into a .pdf file.
 	
-	The nameing convention for the data tables in CWI is to begin with the letter 'c', followed by the database version number, currently '4' or '5' as defined on the MGS ftp site or the MWI documentation website.  The nameing convention for OWI data tables will be to begin with the letter 'o', and version '1', and end with the same suffix as the corresponding CWI data table.  Non-filtering views on the data tables are named 'vo1' followed by the table suffix. Filtering views on the data tables are named 'v1' followed by a descriptive suffix.
+	The naming convention for the data tables in CWI is to begin with the letter 'c', followed by the database version number, currently '4' or '5' as defined on the MGS ftp site or the MWI documentation website.  The nameing convention for OWI data tables will be to begin with the letter 'o', and version '1', and end with the same suffix as the corresponding CWI data table.  Non-filtering views on the data tables are named 'vo1' followed by the table suffix. Filtering views on the data tables are named 'v1' followed by a descriptive suffix.
 
 	Beginning in version c5.4.0, the purpose of the identifiers table is changed from holding only alternate identifiers to holding all identifiers, and also to add uniqueness constraints on identifiers.  The identifiers in c5id as served from the CWI database do not meet the uniqueness constraints for MNU identifiers, so a new table  o1id is created that mirrors c5id, but only compliant identifiers are copied from c5id and c5ix into c1id.  
 	Beginning in version c5.4.#, attempts will be made to resolve non-compliant identifiers in c5id and so bring them into o1id.  This also involves de-duplicating  c5ix and the other data tables.  The corrections might be made in the c5-- tables, or in new o1-- tables.
@@ -124,7 +124,7 @@ Views
 	
 
 Logic for merging well records.	
-	Let's assume that wellid 202 is to be merged into wellid 101.  In general, if the lower valued wellid is a MUN, then it should be kept and the higher valued wellid removed. This data model has no history tables and no 'undo' capability.	
+	Let's assume that wellid 202 is to be merged into wellid 101.  In general, if the lower valued wellid is a MNU, then it should be kept and the higher valued wellid removed. This data model has no history tables and no 'undo' capability.	
 	
 		Step 1) Edit each data table (except o1id) to collect valid data in the records for wellid 101.
 		Step 2) Edit o1id to point all identifiers to the same wellid: 
@@ -139,7 +139,7 @@ Notes on Modified Identifier Model (version c5.4.2)
 	
 	Implement as much of the merge logic as possible as triggers rather than coding in the interface.
 	
-	Logic for merging well records.	Let's assume that wellid 202 is to be merged into wellid 101.  In general, if the lower valued wellid is a MUN, then it should be kept and the higher valued wellid removed.  
+	Logic for merging well records.	Let's assume that wellid 202 is to be merged into wellid 101.  In general, if the lower valued wellid is a MNU, then it should be kept and the higher valued wellid removed.  
 	
 		Step 1) Edit the identifiers table to point all identifiers to the same wellid: 
 			"UPDATE c5id SET wellid=101, sMNU=0 WHERE wellid=202;" 
