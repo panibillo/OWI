@@ -3,7 +3,7 @@ OWI database
 
 Dependencies:
     Python >= 3.7
-    OWI_logins.py  
+    OWI_secrets.py (optional, git-ignored; see class ftp_params)
 
 Some code is copied from convert_cwi_to_pandas.py by Randal Barnes     
 
@@ -17,6 +17,7 @@ Manual download instruction:
 '''
 
 import os, shutil
+import getpass, shlex
 import time
 import datetime
 from ftplib import FTP
@@ -26,6 +27,11 @@ import csv
 import logging
 
 from OWI_config import versioninfo
+
+try:
+    import OWI_secrets as S     # git-ignored; may be missing
+except ImportError:
+    S = None
 
 
 def xlsx_to_csv(xlsx_file, csv_file=None):
@@ -93,8 +99,7 @@ def download_cwi_from_ftp( ftpaddr,
     File dates are compared, and the ftp download only progresses if the
     ftp version is newer.  
     
-    The ftp login is found by RUN_download_cwi in the keyring,
-    in environment variables, or by asking the user.
+    The ftp login is found by class ftp_params.
     The download targets are defined in OWI_config.py
     
     Notes on variable names:
@@ -106,10 +111,6 @@ def download_cwi_from_ftp( ftpaddr,
     rv = []
     ftpstart = time.time()
     with FTP(ftpaddr) as ftp:
-        if ftppass == '<ask>':
-            import getpass
-            ftppass = getpass.getpass(prompt=f'Enter password for ftp user "{ftpuser}": ')
-            
         ftp.login(user=ftpuser, passwd=ftppass)
         log.debug(msg='ftp Log-in successful')
         
@@ -205,58 +206,118 @@ def download_cwi_from_ftp( ftpaddr,
     return rv
 
 class ftp_params:
+    '''
+    The ftp login for the CWI download.
+
+    All ftp login code is kept in this class.
+    No credentials are written in this file.
+    Method get() looks for the login in this order:
+        1. File OWI_secrets.py (git-ignored; may be missing)
+        2. The keyring
+        3. Environment variables, named as in ftp_params.names
+        4. Asking the user, who may then save it to the keyring or to an environment file
+    Messages never display the password.
+    '''
+    names = ('CWI_FTP_SITE', 'CWI_FTP_DATA_PATH', 'CWI_FTP_USER', 'CWI_FTP_PASS')
+    env_file = os.path.expanduser('~/.config/OWI/ftp.env')
     addr = None
     path = None
     user = None
     passwd = None
 
+    def set_values(self, values):
+        # Set all four values, or none of them.
+        if values is None or len(values) != 4 or not all(values):
+            return False
+        self.addr, self.path, self.user, self.passwd = values
+        return True
+
+    def keyring_id(self):
+        # The keyring service and username may be set in OWI_secrets.py
+        service = getattr(S, 'CWI_FTP_KEYRING_SERVICE', '') or 'OWI_ftp'
+        username = getattr(S, 'CWI_FTP_KEYRING_USER', '') or getpass.getuser()
+        return service, username
+
+    def get_from_secrets(self):
+        values = [getattr(S, name, '') for name in self.names]
+        return self.set_values(values)
+
     def get_from_keyring(self):
-        # Credentials are stored in the keyring by set_logins.py
+        # The keyring entry is stored as 'site|path|user|password'.
+        # The password is last, so it may itself contain '|'.
         try:
-            from set_logins import get_ftp_logins
-            self.addr, self.path, self.user, self.passwd = get_ftp_logins()
+            import keyring
+            data = keyring.get_password(*self.keyring_id())
         except Exception as e:
-            raise ValueError(f"FTP parameters not found in keyring ({type(e).__name__}).")
-        return
+            log.warning(f"Could not read the keyring ({type(e).__name__}).")
+            return False
+        if data is None:
+            return False
+        return self.set_values(data.split('|', 3))
 
-    def get_from_environment(self, prefix='OWI_FTP_'):
-        import os
-        self.addr = os.getenv(prefix + 'ADDRESS', self.addr)
-        self.path = os.getenv(prefix + 'PATH', self.path)
-        self.user = os.getenv(prefix + 'USERNAME', self.user)
-        self.passwd = os.getenv(prefix + 'PASSWORD', self.passwd)
-
-        if None in (self.addr, self.path, self.user, self.passwd):
-            # reset to None if any are missing
-            self.addr = None
-            self.path = None
-            self.user = None
-            self.passwd = None
-            raise ValueError("FTP parameters not fully set from environment variables.")
-        return
+    def get_from_environment(self):
+        values = [os.getenv(name, '') for name in self.names]
+        return self.set_values(values)
 
     def get_from_user(self):
-        import getpass
-        self.addr = input("Enter the FTP address: ")
-        self.path = input(f"Enter the FTP path:  {self.addr}/")
-        self.user = input("Enter your FTP username: ")
-        self.passwd = getpass.getpass(prompt=f'Enter password for ftp user "{self.user}": ')
+        addr = input("Enter the FTP address: ")
+        path = input(f"Enter the FTP path:  {addr}/")
+        user = input("Enter your FTP username: ")
+        passwd = getpass.getpass(prompt=f'Enter password for ftp user "{user}": ')
+        return self.set_values((addr, path, user, passwd))
+
+    def save_to_keyring(self):
+        import keyring
+        data = '|'.join((self.addr, self.path, self.user, self.passwd))
+        keyring.set_password(*self.keyring_id(), data)
+        print(f"FTP login for '{self.user}@{self.addr}' saved in the keyring.")
+
+    def save_to_env_file(self, path=None):
+        if path is None:
+            path = self.env_file
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        values = (self.addr, self.path, self.user, self.passwd)
+        # Make the file private before writing the password.
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, 'w') as f:
+            for name, value in zip(self.names, values):
+                f.write(f"export {name}={shlex.quote(value)}\n")
+        print(f"FTP login saved in {path}")
+        print("To load it in every new shell, add this line to ~/.bashrc:")
+        print(f"    source {path}")
+
+    def ask_to_save(self):
+        answer = input("Save this FTP login for future runs? [k] keyring, [e] environment file, [n] no: ")
+        answer = answer.strip().lower()
+        if answer == 'k':
+            self.save_to_keyring()
+        elif answer == 'e':
+            self.save_to_env_file()
+        else:
+            print("FTP login not saved.")
+
+    def setup(self):
+        # Ask the user for the login, and offer to save it.
+        if not self.get_from_user():
+            raise ValueError("FTP login is incomplete. All four values are required.")
+        self.ask_to_save()
+
+    def get(self):
+        if self.get_from_secrets():
+            log.info("FTP login found in OWI_secrets.py")
+        elif self.get_from_keyring():
+            log.info("FTP login found in the keyring")
+        elif self.get_from_environment():
+            log.info("FTP login found in environment variables")
+        else:
+            log.warning("FTP login not found in OWI_secrets.py, the keyring, or environment variables.")
+            self.setup()
         return
 
 def RUN_download_cwi(C):
-    # Look for the FTP parameters in the keyring,
-    # then in environment variables,
-    # and finally ask the user.
     params = ftp_params()
-    try:
-        params.get_from_keyring()
-    except ValueError:
-        logging.warning("Could not get FTP parameters from keyring. Trying environment variables.")
-        try:
-            params.get_from_environment()
-        except ValueError:
-            logging.warning("Could not get FTP parameters from environment variables. Asking user.")
-            params.get_from_user()
+    params.get()
 
     logging.debug("RUN_download_cwi()")
     logging.debug(versioninfo(C))
@@ -265,7 +326,6 @@ def RUN_download_cwi(C):
     logging.debug(f"OWI_DOWNLOAD_WELLSSHP_DIR = {C.OWI_DOWNLOAD_WELLSSHP_DIR}")
     logging.debug(f"OWI_DOWNLOAD_FILES = {C.OWI_DOWNLOAD_FILES}")
            
-    # ftpaddr, ftppath, ftpuser, ftppass = L.get_ftp_logins('CWI_ftp', None)
     newfiles = download_cwi_from_ftp(
         ftpaddr = params.addr,
         ftppath = params.path,
@@ -280,6 +340,9 @@ def RUN_download_cwi(C):
 
 if __name__ == '__main__':
     from OWI_config import OWI_version_40 as C
-    RUN_download_cwi(C)  
+    if 0:   # Enter and save the ftp login only. No download.
+        ftp_params().setup()
+    if 1:
+        RUN_download_cwi(C)
     
     print ('\n///////////// DONE ///////////////')

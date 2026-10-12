@@ -13,7 +13,7 @@ Major project components include:
 * A script to automate downloading and unzipping of files from an ftp site.
 * A script to automate importing of the downloaded files into the sqlite database.
 * A public config file defining paths, schema versions, and files.
-* A non-public config file defining the download site and logins.
+* An optional non-public file holding the download site and logins.
 
 The initial software versions are suitable only for building a local database from scratch. There is no functionality for maintaining a local database by adding only new records or for updating only changed records.
 
@@ -89,7 +89,13 @@ This project is tested on Windows 10 and Ubuntu 20.04
   Run OWI scripts inside the container with `.venv-dbx/bin/python3`.
   From outside the container, prefix the command with `distrobox enter dbx-qgis --`.
 
-* You are reponsible for getting instructions and credentials for downloading the data files from the ftp site. The needed information is described in file `OWI_logins__template.py`.  Make a copy of that file named `OWI_logins.py` and enter the information using normal Python syntax.  Do not share that file, and do not add to this repository.
+* You are reponsible for getting instructions and credentials for downloading the data files from the ftp site. The needed information is described in file `OWI_secrets__template.py`.  The download script looks for the ftp login in this order:
+    1. File `src/OWI_secrets.py`. Make a copy of the template with that name, and enter the information using normal Python syntax.  Do not share that file, and do not add it to this repository. It is named in `.gitignore`.
+    2. The system keyring.
+    3. Environment variables `CWI_FTP_SITE`, `CWI_FTP_DATA_PATH`, `CWI_FTP_USER`, and `CWI_FTP_PASS`.
+    4. Asking you. You may then save the login in the keyring, or in the file `~/.config/OWI/ftp.env`. To use that file, add the line `source ~/.config/OWI/ftp.env` to `~/.bashrc`.
+
+  To enter and save the login without downloading, switch on the `ftp_params().setup()` block at the bottom of `OWI_download_ftp.py`. All ftp login code is in class `ftp_params` in that file.
 
 Edit the file `OWI_config.py`:
 
@@ -103,7 +109,7 @@ Edit the file `OWI_config.py`:
 
 Prepare for execution:
 
-* Ensure that OWI_config.py and OWI_logins.py exist and have been edited for your installation.
+* Ensure that OWI_config.py has been edited for your installation, and that the ftp login is available (see above).
 
 * Ensure that there is sufficient disk space for downloading the data files, extracting the zip files, and creating the database from scratch.  That will take less than 2Gigabytes of disk space (as little as 1.7G?).
 

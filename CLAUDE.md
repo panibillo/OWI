@@ -56,8 +56,10 @@
 
 ## Credentials and outside services
 
-- `src/OWI_logins.py` holds real FTP credentials.
-  Never open it, print it, copy values from it, or add it to git.
+- `src/OWI_secrets.py` and `~/.config/OWI/ftp.env` hold real FTP credentials.
+  Never open them, print them, copy values from them, or add them to git.
+- All FTP login code is in class `ftp_params` in `src/OWI_download_ftp.py`.
+  It holds no credentials.
 - Never display credentials stored in the keyring.
 - `RUN_download_cwi` contacts the state FTP server.
   Never run it without the User's explicit approval.

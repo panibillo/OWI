@@ -7,7 +7,7 @@
 **.aux
 **.log
 **.gz
-src/OWI_logins.py
+src/OWI_secrets.py
 scratch/**
 bak/**
 .project
